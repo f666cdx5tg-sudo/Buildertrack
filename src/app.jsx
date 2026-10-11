@@ -1761,7 +1761,7 @@ function HeaderRight() {
   return (
     <div style={{ textAlign: "right", flexShrink: 0, lineHeight: 1.3 }}>
       <div style={{ color: AG, fontWeight: 800, fontSize: 16 }}>{now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</div>
-      <div style={{ color: TXT2, fontSize: 11 }}>{now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
+      <div style={{ color: TXT2, fontSize: 11 }}>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</div>
       <div style={{ color: TXT2, fontSize: 11, display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end", marginTop: 2 }}>
         {weather ? (<>
           <span title={cond} style={{ display: "inline-flex", alignItems: "center", gap: 4, color: TXT, fontWeight: 700 }}><span style={{ color: WX_COLORS[icon] || TXT, display: "inline-flex" }}><Icon n={icon} /></span>{Math.round(weather.temp)}°</span>
