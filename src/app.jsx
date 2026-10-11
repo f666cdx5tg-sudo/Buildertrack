@@ -2254,8 +2254,8 @@ function App({ saved, savedCfg }) {
 
   const curPage = mainPages.find(p => p.id === page) || tradePages.find(p => p.id === page);
   const pageTitle = curPage ? curPage.label : "Dashboard";
-  const navItem = (active, col) => ({ display: "flex", alignItems: "center", gap: 14, width: "100%", minHeight: 52, padding: "6px 14px", background: active ? col + "28" : "transparent", border: "none", borderRadius: 12, cursor: "pointer", color: active ? col : TXT, fontFamily: font, fontSize: 17, fontWeight: 700, marginBottom: 2, textAlign: "left" });
-  const secLbl = { fontFamily: font, fontSize: 13, color: TXT2, textTransform: "uppercase", letterSpacing: "0.07em", padding: "12px 14px 6px", fontWeight: 700 };
+  const navItem = (active, col) => ({ display: "flex", alignItems: "center", gap: 10, width: "100%", minHeight: 42, padding: "4px 12px", background: active ? col + "28" : "transparent", border: "none", borderRadius: 12, cursor: "pointer", color: active ? col : TXT, fontFamily: font, fontSize: 14, fontWeight: 500, marginBottom: 2, textAlign: "left" });
+  const secLbl = { fontFamily: font, fontSize: 11, color: TXT2, textTransform: "uppercase", letterSpacing: "0.07em", padding: "12px 12px 6px", fontWeight: 600 };
 
   return (
     <div style={{ ...S.app, height: `calc(100vh / ${zoom})`, zoom, minHeight: 0, overflow: "hidden" }}>
@@ -2289,7 +2289,7 @@ function App({ saved, savedCfg }) {
 
         {/* ── DRAWER ── */}
         <div role="navigation" aria-label="Navigation" style={{
-          position: "relative", width: 280, flexShrink: 0, background: BG2, borderRight: `1px solid ${BD}`,
+          position: "relative", width: 216, flexShrink: 0, background: BG2, borderRight: `1px solid ${BD}`,
           display: "flex", flexDirection: "column", overflowY: "auto",
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px 10px 16px", borderBottom: `1px solid ${BD}`, position: "sticky", top: 0, background: BG2, zIndex: 2, flexShrink: 0 }}>
@@ -2304,7 +2304,7 @@ function App({ saved, savedCfg }) {
               <div style={secLbl}>Navigation</div>
               {mainPages.map(p => (
                 <button key={p.id} onClick={() => { setPage(p.id); setTradeFilter(""); setDrawer(false); }} style={navItem(page === p.id, AG)}>
-                  <Icon n={p.icon} size={26} />
+                  <Icon n={p.icon} size={20} />
                   <span style={{ flex: 1 }}>{p.label}</span>
                   {p.badge > 0 && <span style={{ background: PK, color: "#000", fontSize: 12, fontWeight: 800, borderRadius: 10, padding: "1px 8px" }}>{p.badge}</span>}
                 </button>
@@ -2318,7 +2318,7 @@ function App({ saved, savedCfg }) {
                 const tradeProgress = progress[trade] || 0;
                 return (
                   <button key={p.id} onClick={() => { setPage(p.id); setTradeFilter(trade); setDrawer(false); }} style={navItem(page === p.id, PK)}>
-                    <Icon n={p.icon} size={26} style={{ color: TRADE_COLORS[trade] }} />
+                    <Icon n={p.icon} size={20} style={{ color: TRADE_COLORS[trade] }} />
                     <div style={{ flex: 1 }}>
                       <div>{trade}</div>
                       <div style={{ height: 3, borderRadius: 2, background: BD, marginTop: 4, overflow: "hidden" }}>
