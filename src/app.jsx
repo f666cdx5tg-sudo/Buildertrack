@@ -650,7 +650,7 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
             const items = caItems("grnd").filter(item => isItemEnabled("grnd", item));
             const gw = bodyW / items.length;
             const grndColors = ["#06B6D4","#8B5CF6","#F59E0B","#EC4899","#10B981","#6366F1"];
-            const gIcon = (n) => { const l = n.toLowerCase(); return l.includes("exit") || l.includes("door") || l.includes("entrance") ? "exit" : l.includes("court") ? "courtyard" : l.includes("park") ? "parking" : l.includes("sidewalk") || l.includes("walk") ? "sidewalk" : null; };
+            const gIcon = (n) => { const l = n.toLowerCase(); return l.includes("exit") || l.includes("door") || l.includes("entrance") ? "exit" : l.includes("court") ? "tree" : l.includes("park") ? "parking" : l.includes("sidewalk") || l.includes("walk") ? "sidewalk" : null; };
             return items.map((item, i) => {
               const key = `grnd-${item}`;
               const statusCol = getCAColor("grnd", item);
