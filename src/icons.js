@@ -132,5 +132,5 @@ export const ICONS = {
   sprinkler:'<path d="M12 3v5"/><path d="M9 8h6l1.5 3.5h-9z"/><path d="M12 11.5V13"/><path d="M7.5 16l-1.5 3M12 15.5v4M16.5 16l1.5 3"/>',
   fireext:'<path d="M8 21V11a4 4 0 018 0v10z"/><path d="M10.5 7.2V4.5M8.5 4.5h5"/><path d="M13.5 4.5h2.5a3 3 0 013 3V11"/><path d="M8 14.5h8"/>',
   pump:'<circle cx="10" cy="13.5" r="5.5"/><circle cx="10" cy="13.5" r="1.6"/><path d="M10 8V4.5h5M15.5 13.5H21M2.5 13.5h2M6 21h8"/>',
-  hvac:'<path d="M2 9.5L12 2.5l10 7"/><path d="M12 7v13"/><path d="M8 21.5h8"/><path d="M7 11.1V17.9M4.06 12.8L9.94 16.2M4.06 16.2L9.94 12.8"/><circle cx="17" cy="14.5" r="1.9"/><path d="M17 10.2v1M17 17.8v1M12.7 14.5h1M20.3 14.5h1M14 11.5l.7.7M19.3 16.8l.7.7M20 11.5l-.7.7M14.7 16.8l-.7.7"/>'
+  hvac:'<path d="M9.6 4.6A2 2 0 1111 8H2M12.6 19.4A2 2 0 1014 16H2M17.7 7.7A2.5 2.5 0 1119.5 12H2"/>'
 };
