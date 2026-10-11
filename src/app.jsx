@@ -1755,23 +1755,25 @@ function HeaderRight() {
     const t = setInterval(load, 15 * 60 * 1000);
     return () => { alive = false; clearInterval(t); };
   }, []);
-  const [cond, icon] = weather ? WMO(weather.code) : ["", "suncloud"];
-  const forecast = weather?.days?.slice(1, 4) || []; // next three days
-  const dayName = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("en-US", { weekday: "short" });
+  const [di, setDi] = useState(0); // 0 = today, 1..3 = next days; tap steps one day at a time
+  const days = weather?.days?.slice(0, 4) || [];
+  const idx = Math.min(di, Math.max(days.length - 1, 0));
+  const d = days[idx];
+  const [cond, icon] = d ? WMO(d.code) : weather ? WMO(weather.code) : ["", "suncloud"];
+  const label = idx === 0 ? "Today" : new Date(d.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" });
   return (
     <div style={{ textAlign: "right", flexShrink: 0, lineHeight: 1.3 }}>
       <div style={{ color: AG, fontWeight: 800, fontSize: 16 }}>{now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</div>
       <div style={{ color: TXT2, fontSize: 11 }}>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</div>
-      <div style={{ color: TXT2, fontSize: 11, display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end", marginTop: 2 }}>
-        {weather ? (<>
-          <span title={cond} style={{ display: "inline-flex", alignItems: "center", gap: 4, color: TXT, fontWeight: 700 }}><span style={{ color: WX_COLORS[icon] || TXT, display: "inline-flex" }}><Icon n={icon} /></span>{Math.round(weather.temp)}°</span>
-          {forecast.map(d => { const [c, ic] = WMO(d.code); return (
-            <span key={d.date} title={`${dayName(d.date)}: ${c}, high ${Math.round(d.hi)}° / low ${Math.round(d.lo)}°`} style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1 }}>
-              <span style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: 0.4 }}>{dayName(d.date)}</span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 2, color: TXT }}><span style={{ color: WX_COLORS[ic] || TXT, display: "inline-flex" }}><Icon n={ic} /></span>{Math.round(d.hi)}°</span>
-            </span>); })}
-        </>) : <span>{weather === null ? "…" : "No weather"}</span>}
-      </div>
+      {weather ? (
+        <button onClick={() => setDi((idx + 1) % Math.max(days.length, 1))} title={`${label}: ${cond}. Tap for the next day`} aria-label={`${label} weather: ${cond}. Tap for the next day`}
+          style={{ background: "none", border: "none", padding: 0, marginTop: 2, cursor: "pointer", color: TXT2, fontSize: 11, display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "inherit" }}>
+          <span style={{ color: WX_COLORS[icon] || TXT, display: "inline-flex" }}><Icon n={icon} /></span>
+          <span style={{ color: TXT, fontWeight: 700 }}>{label}</span>
+          {idx === 0 && <span style={{ color: TXT, fontWeight: 700 }}>{Math.round(weather.temp)}°</span>}
+          <span>{d ? `${Math.round(d.hi)}°/${Math.round(d.lo)}°` : ""}</span>
+        </button>
+      ) : <div style={{ color: TXT2, fontSize: 11, marginTop: 2 }}>{weather === null ? "…" : "No weather"}</div>}
     </div>
   );
 }
