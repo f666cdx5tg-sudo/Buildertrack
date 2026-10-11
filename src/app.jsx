@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import qrcode from "qrcode-generator";
 import { ICONS } from "./icons.js";
 
-const APP_VERSION = "3.0.4";
+const APP_VERSION = "3.0.5";
 const DEFAULT_PROJECT = "456 Grand Ave — Full Building Renovation";
 
 // ─── DATA & CONSTANTS ───────────────────────────────────────────────────────
@@ -2496,11 +2496,11 @@ function App({ saved, savedCfg }) {
             </div>
 
             <div style={{ padding: "0 14px 8px" }}>
-              <div style={{ ...secLbl, padding: "12px 0 8px" }}>Text size</div>
-              <div style={{ display: "flex", gap: 6 }}>
-                {[["Normal", 1], ["Large", 1.15], ["XL", 1.3]].map(([lb, z]) => (
-                  <button key={lb} onClick={() => setZoom(z)} style={{ ...S.tab(Math.abs(zoom - z) < 0.01), flex: 1, padding: "10px 4px" }}>{lb}</button>
-                ))}
+              <div style={{ ...secLbl, padding: "12px 0 8px", display: "flex", justifyContent: "space-between" }}><span>Text size</span><span style={{ color: PK }}>{Math.round(zoom * 100)}%</span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 13, color: TXT2, fontWeight: 700 }}>A</span>
+                <input type="range" aria-label="Text size" min="0.85" max="1.5" step="0.05" value={zoom} onChange={e => setZoom(parseFloat(e.target.value))} style={{ flex: 1, accentColor: AG, height: 32 }} />
+                <span style={{ fontSize: 22, color: TXT2, fontWeight: 700 }}>A</span>
               </div>
             </div>
           </div>
