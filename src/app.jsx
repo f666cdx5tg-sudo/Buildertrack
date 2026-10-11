@@ -2263,8 +2263,12 @@ function App({ saved, savedCfg }) {
 
       {/* ── TOPBAR ── */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: `${SAFE_TOP} 16px 12px`, background: BG1, borderBottom: `1px solid ${BD}`, flexShrink: 0, zIndex: 100 }}>
+        <div style={{ width: 184, flexShrink: 0, paddingRight: 16, borderRight: `1px solid ${BD}`, alignSelf: "stretch", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.1, whiteSpace: "nowrap" }}>Build<span style={{ color: AG }}>Track</span> <span style={{ color: TXT2, fontSize: 12, fontWeight: 600 }}>v{APP_VERSION}</span></div>
+          <div style={{ color: TXT2, fontSize: 13, fontWeight: 600, letterSpacing: 0.3, marginTop: 2 }}>Command Center</div>
+        </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{page === "dashboard" ? <>Build<span style={{ color: AG }}>Track</span></> : pageTitle}</div>
+          <div style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pageTitle}</div>
           {editingProject ? (
             <input
               style={{ ...S.input, fontSize: 14, fontWeight: 700, padding: "4px 8px", marginTop: 2 }}
@@ -2292,13 +2296,6 @@ function App({ saved, savedCfg }) {
           position: "relative", width: 216, flexShrink: 0, background: BG2, borderRight: `1px solid ${BD}`,
           display: "flex", flexDirection: "column", overflowY: "auto",
         }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px 10px 16px", borderBottom: `1px solid ${BD}`, position: "sticky", top: 0, background: BG2, zIndex: 2, flexShrink: 0 }}>
-            <div>
-              <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.1 }}>Build<span style={{ color: AG }}>Track</span> <span style={{ color: TXT2, fontSize: 12, fontWeight: 600 }}>v{APP_VERSION}</span></div>
-              <div style={{ color: TXT2, fontSize: 13, fontWeight: 600, letterSpacing: 0.3, marginTop: 2 }}>Command Center</div>
-            </div>
-          </div>
-
           <div style={{ flexShrink: 0, padding: "8px 0" }}>
             <div style={{ padding: "0 10px" }}>
               <div style={secLbl}>Navigation</div>
