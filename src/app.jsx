@@ -2264,7 +2264,7 @@ function App({ saved, savedCfg }) {
       {/* ── TOPBAR ── */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: `${SAFE_TOP} 16px 12px`, background: BG1, borderBottom: `1px solid ${BD}`, flexShrink: 0, zIndex: 100 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pageTitle}</div>
+          <div style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{page === "dashboard" ? <>Build<span style={{ color: AG }}>Track</span></> : pageTitle}</div>
           {editingProject ? (
             <input
               style={{ ...S.input, fontSize: 14, fontWeight: 700, padding: "4px 8px", marginTop: 2 }}
