@@ -604,7 +604,11 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
             const bsy = by + bodyH + lobbyH;
             const rooms = caItems("base").filter(r => isItemEnabled("base", r));
             const roomW = rooms.length > 0 ? bodyW / rooms.length : bodyW;
-            const roomColors = ["#F87171","#FB923C","#4ADE80","#60A5FA","#A78BFA","#FBBF24"];
+            const roomColors = ["#4ADE80","#60A5FA","#A78BFA","#FBBF24","#22D3EE","#F472B6"];
+            const RED = "#F87171", ORANGE = "#FB923C";
+            const kindOf = r => { const n = r.toLowerCase(); return n.includes("boiler") ? ORANGE : (n.includes("fire") || n.includes("suppression") || n.includes("sprinkler")) ? RED : null; };
+            let colorN = 0;
+            const roomCol = rooms.map(r => kindOf(r) || roomColors[colorN++ % roomColors.length]);
             return (<g>
               <rect x={bx} y={bsy} width={bodyW} height={bsmtH} fill="#1F293780" stroke={OL} strokeWidth="2.5" strokeDasharray="6,3" />
               <line x1={bx-6} y1={bsy} x2={bx-6} y2={bsy+bsmtH+10} stroke={OL} strokeWidth="2" />
@@ -612,7 +616,7 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
               <rect x={bx-10} y={bsy+bsmtH} width={bodyW+20} height={10} fill={WALL} stroke={OL} strokeWidth="1.5" />
               {rooms.map((room, i) => {
                 const key = `base-${room}`;
-                const rc = roomColors[i % roomColors.length];
+                const rc = roomCol[i];
                 const statusCol = getCAColor("base", room);
                 const rx = bx + 3 + i * roomW;
                 const isBoiler = room.toLowerCase().includes("boiler");

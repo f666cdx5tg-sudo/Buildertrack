@@ -1,7 +1,7 @@
 import React from "react";
 import { ICONS } from "./icons.js";
 
-export const APP_VERSION = "3.1.11";
+export const APP_VERSION = "3.1.12";
 
 // ─── STYLES ─────────────────────────────────────────────────────────────────
 export const font = "-apple-system, 'SF Pro Text', BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
