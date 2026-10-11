@@ -1,0 +1,6 @@
+node_modules/
+dist-*.html
+*.bak*
+server/node_modules/
+server/.wrangler/
+server/dev.log

@@ -1,0 +1,9 @@
+name = "buildtrack-tickets"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# After `wrangler d1 create buildtrack`, paste the database_id it prints below.
+[[d1_databases]]
+binding = "DB"
+database_name = "buildtrack"
+database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
