@@ -1763,7 +1763,7 @@ function HeaderRight() {
   const label = idx === 0 ? "Today" : new Date(d.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" });
   return (
     <div style={{ textAlign: "right", flexShrink: 0, lineHeight: 1.3 }}>
-      <div style={{ color: AG, fontWeight: 800, fontSize: 16 }}>{now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</div>
+      <div style={{ color: AG, fontWeight: 400, fontSize: 24, lineHeight: 1.1 }}>{now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</div>
       <div style={{ color: TXT2, fontSize: 11 }}>{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</div>
       {weather ? (
         <button onClick={() => setDi((idx + 1) % Math.max(days.length, 1))} title={`${label}: ${cond}. Tap for the next day`} aria-label={`${label} weather: ${cond}. Tap for the next day`}
