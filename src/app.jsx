@@ -597,9 +597,10 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
               <rect x={bx+bodyW*0.74} y={ly+4} width={bodyW*0.22} height={lobbyH-8} rx="4" fill="#FDE68A12" stroke="#FDE68A" strokeWidth="1.5" />
               <SvgIcon n="mailroom" x={bx+bodyW*0.85-14} y={ly+8} size={28} color="#FDE68A" />
               <text x={bx+bodyW*0.85} y={ly+lobbyH-14} textAnchor="middle" fill="#FDE68A" fontSize="10" fontWeight="700">MAILROOM</text>
-              {/* Lobby label */}
-              <rect x={bx+3} y={ly+lobbyH/2-11} width={floorLblW-8} height={22} rx="4" fill="#4ADE8050" stroke="#4ADE80" strokeWidth="1.5" />
-              <SvgIcon n="lobby" x={bx+floorLblW/2-11} y={ly+lobbyH/2-11} size={22} color="#4ADE80" />
+              {/* Lobby (same size as the mailroom, mirrored on the left) */}
+              <rect x={bx+bodyW*0.04} y={ly+4} width={bodyW*0.22} height={lobbyH-8} rx="4" fill="#4ADE8012" stroke="#4ADE80" strokeWidth="1.5" />
+              <SvgIcon n="lobby" x={bx+bodyW*0.15-14} y={ly+8} size={28} color="#4ADE80" />
+              <text x={bx+bodyW*0.15} y={ly+lobbyH-14} textAnchor="middle" fill="#4ADE80" fontSize="10" fontWeight="700">LOBBY</text>
             </g>);
           })()}
 
