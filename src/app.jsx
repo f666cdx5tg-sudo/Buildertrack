@@ -550,8 +550,11 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
                 return (<g key={`car-${car}`} onClick={() => setEditingCA(`elev-${car}`)} style={{ cursor: "pointer" }}>
                   <rect x={cx} y={cy} width={carW} height={uH} rx="5" fill={stuck ? "#ef5350" : elevColors[ci] || "#888"} stroke={stuck ? "#FF0" : "#FFF"} strokeWidth={stuck ? "3" : "2"} />
                   {stuck && <><line x1={cx+4} y1={cy+4} x2={cx+carW-4} y2={cy+uH-4} stroke="#FF0" strokeWidth="2" /><line x1={cx+carW-4} y1={cy+4} x2={cx+4} y2={cy+uH-4} stroke="#FF0" strokeWidth="2" /></>}
-                  <SvgIcon n="elevcar" x={cx+carW/2-15} y={cy+6} size={24} color="#FFF" />
-                  <text x={cx+carW/2} y={cy+uH-6} textAnchor="middle" fill="#FFF" fontSize="14" fontWeight="900">{ci+1}</text>
+                  {/* elevator front: floor display on top, two sliding doors below */}
+                  <rect x={cx+10} y={cy+5} width={carW-22} height={12} rx="2" fill="#000000AA" />
+                  <text x={cx+10+(carW-22)/2} y={cy+14.5} textAnchor="middle" fill="#FFF" fontSize="10" fontWeight="900">{ci+1}</text>
+                  <rect x={cx+6} y={cy+20} width={(carW-12)/2-1} height={uH-26} rx="1.5" fill="#FFFFFF2E" stroke="#FFF" strokeWidth="1.4" />
+                  <rect x={cx+carW/2+1} y={cy+20} width={(carW-12)/2-1} height={uH-26} rx="1.5" fill="#FFFFFF2E" stroke="#FFF" strokeWidth="1.4" />
                   <circle cx={cx+carW-6} cy={cy+6} r="5" fill={statusCol} stroke={statusCol==="#FFFFFF"?"#999":"#FFF"} strokeWidth="1" />
                   {stuck && <text x={cx+carW/2} y={cy+uH+11} textAnchor="middle" fill="#FF0" fontSize="7" fontWeight="800">STUCK</text>}
                 </g>);

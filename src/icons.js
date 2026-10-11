@@ -138,6 +138,5 @@ export const ICONS = {
   mailroom:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M3 7l9 6.5L21 7"/>',
   lobby:'<path d="M12 6V9M10 5.5h4"/><path d="M5 17a7 7 0 0114 0z"/><path d="M3 20.5h18"/>',
   bulkhead:'<path class="f" stroke="none" fill-rule="evenodd" d="M3 9.5L21 6.5v3.5H3z M5 10h14v10.5H5z M9.5 13.5h5v7h-5z M16 12.5h1.8v2H16z"/><path d="M1.5 20.5h21"/>',
-  elevcar:'<rect x="3.5" y="3" width="12" height="18" rx="1.5"/><path d="M9.5 3v18"/><path d="M18.5 9l1.5-2 1.5 2M18.5 15l1.5 2 1.5-2"/>',
   hvac:'<path d="M9.6 4.6A2 2 0 1111 8H2M12.6 19.4A2 2 0 1014 16H2M17.7 7.7A2.5 2.5 0 1119.5 12H2"/>'
 };
