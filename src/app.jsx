@@ -599,7 +599,7 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
               <text x={bx+bodyW*0.85} y={ly+lobbyH-14} textAnchor="middle" fill="#FDE68A" fontSize="10" fontWeight="700">MAILROOM</text>
               {/* Lobby label */}
               <rect x={bx+3} y={ly+lobbyH/2-11} width={floorLblW-8} height={22} rx="4" fill="#4ADE8050" stroke="#4ADE80" strokeWidth="1.5" />
-              <text x={bx+floorLblW/2} y={ly+lobbyH/2+4} textAnchor="middle" fill="#4ADE80" fontSize="11" fontWeight="800">LBY</text>
+              <SvgIcon n="lobby" x={bx+floorLblW/2-11} y={ly+lobbyH/2-11} size={22} color="#4ADE80" />
             </g>);
           })()}
 
