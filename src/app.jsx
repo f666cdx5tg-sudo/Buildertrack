@@ -2263,10 +2263,6 @@ function App({ saved, savedCfg }) {
 
       {/* ── TOPBAR ── */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: `${SAFE_TOP} 16px 12px`, background: BG1, borderBottom: `1px solid ${BD}`, flexShrink: 0, zIndex: 100 }}>
-        <button onClick={() => setDrawer(true)} aria-label="Menu" style={{ width: 46, height: 46, borderRadius: 13, border: `1px solid ${BD}`, background: BG3, color: TXT, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0, fontSize: 22, flexShrink: 0, position: "relative" }}>
-          <Icon n="menu" />
-          {newTicketCount > 0 && <span style={{ position: "absolute", top: -4, right: -4, background: PK, color: "#000", fontSize: 11, fontWeight: 800, borderRadius: 10, padding: "1px 6px" }}>{newTicketCount}</span>}
-        </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pageTitle}</div>
           {editingProject ? (
@@ -2292,18 +2288,15 @@ function App({ saved, savedCfg }) {
       <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
 
         {/* ── DRAWER ── */}
-        <div onClick={() => setDrawer(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 290, opacity: drawer ? 1 : 0, pointerEvents: drawer ? "auto" : "none", transition: "opacity .2s" }} />
-        <div role="dialog" aria-label="Menu" aria-hidden={!drawer} style={{
-          position: "fixed", top: 0, bottom: 0, left: 0, width: 290, maxWidth: "74vw", background: BG2, borderRight: `1px solid ${BD}`,
-          zIndex: 300, display: "flex", flexDirection: "column", overflowY: "auto", transform: drawer ? "translateX(0)" : "translateX(-105%)",
-          visibility: drawer ? "visible" : "hidden", transition: `transform .22s, visibility 0s linear ${drawer ? "0s" : ".22s"}`,
+        <div role="navigation" aria-label="Navigation" style={{
+          position: "relative", width: 280, flexShrink: 0, background: BG2, borderRight: `1px solid ${BD}`,
+          display: "flex", flexDirection: "column", overflowY: "auto",
         }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: `${SAFE_TOP} 14px 10px 16px`, borderBottom: `1px solid ${BD}`, position: "sticky", top: 0, background: BG2, zIndex: 2, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px 10px 16px", borderBottom: `1px solid ${BD}`, position: "sticky", top: 0, background: BG2, zIndex: 2, flexShrink: 0 }}>
             <div>
               <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.1 }}>Build<span style={{ color: AG }}>Track</span> <span style={{ color: TXT2, fontSize: 12, fontWeight: 600 }}>v{APP_VERSION}</span></div>
               <div style={{ color: TXT2, fontSize: 13, fontWeight: 600, letterSpacing: 0.3, marginTop: 2 }}>Command Center</div>
             </div>
-            <button onClick={() => setDrawer(false)} aria-label="Close menu" style={{ width: 42, height: 42, borderRadius: 12, border: `1px solid ${BD}`, background: BG3, color: TXT, cursor: "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}><Icon n="close" /></button>
           </div>
 
           <div style={{ flexShrink: 0, padding: "8px 0" }}>
