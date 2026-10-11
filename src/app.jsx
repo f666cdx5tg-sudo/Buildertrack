@@ -1736,7 +1736,7 @@ const BulkNotices = ({ units, setUnits, projectName }) => {
   );
 };
 
-const WMO = (c) => c === 0 ? ["Clear", "sun"] : c <= 2 ? ["Partly Cloudy", "suncloud"] : c === 3 ? ["Overcast", "cloud"] : c <= 48 ? ["Fog", "fog"] : c <= 57 ? ["Drizzle", "suncloudrain"] : c <= 67 ? ["Rain", "rain"] : c <= 77 ? ["Snow", "snowcloud"] : c <= 82 ? ["Showers", "rain"] : c <= 86 ? ["Snow Showers", "snowcloud"] : ["Thunderstorm", "storm"];
+const WMO = (c) => c === 0 ? ["Clear", "wxsun"] : c <= 2 ? ["Partly Cloudy", "wxpart"] : c === 3 ? ["Overcast", "wxcloud"] : c <= 48 ? ["Fog", "wxfog"] : c <= 57 ? ["Drizzle", "wxrain"] : c <= 67 ? ["Rain", "wxrain"] : c <= 77 ? ["Snow", "wxsnow"] : c <= 82 ? ["Showers", "wxrain"] : c <= 86 ? ["Snow Showers", "wxsnow"] : ["Thunderstorm", "wxstorm"];
 
 const WX_COLORS = { sun: "#FACC15", suncloud: "#FDE68A", cloud: "#94A3B8", fog: "#94A3B8", rain: "#60A5FA", suncloudrain: "#60A5FA", snowcloud: "#BAE6FD", storm: "#FBBF24" };
 
@@ -1759,7 +1759,7 @@ function HeaderRight() {
   const days = weather?.days?.slice(0, 4) || [];
   const idx = Math.min(di, Math.max(days.length - 1, 0));
   const d = days[idx];
-  const [cond, icon] = d ? WMO(d.code) : weather ? WMO(weather.code) : ["", "suncloud"];
+  const [cond, icon] = d ? WMO(d.code) : weather ? WMO(weather.code) : ["", "wxpart"];
   const label = idx === 0 ? "Today" : new Date(d.date + "T12:00:00").toLocaleDateString("en-US", { weekday: "long" });
   return (
     <div style={{ textAlign: "right", flexShrink: 0, lineHeight: 1.3 }}>
@@ -1768,7 +1768,7 @@ function HeaderRight() {
       {weather ? (
         <button onClick={() => setDi((idx + 1) % Math.max(days.length, 1))} title={`${label}: ${cond}. Tap for the next day`} aria-label={`${label} weather: ${cond}. Tap for the next day`}
           style={{ background: "none", border: "none", padding: 0, marginTop: 2, cursor: "pointer", color: TXT2, fontSize: 11, display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "inherit" }}>
-          <span style={{ color: WX_COLORS[icon] || TXT, display: "inline-flex" }}><Icon n={icon} /></span>
+          <span style={{ color: WX_COLORS[icon] || TXT, display: "inline-flex" }}><Icon n={icon} size={24} /></span>
           <span style={{ color: TXT, fontWeight: 700 }}>{label}</span>
           {idx === 0 && <span style={{ color: TXT, fontWeight: 700 }}>{Math.round(weather.temp)}°</span>}
           <span>{d ? `${Math.round(d.hi)}°/${Math.round(d.lo)}°` : ""}</span>

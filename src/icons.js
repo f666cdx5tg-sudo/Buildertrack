@@ -138,5 +138,14 @@ export const ICONS = {
   mailroom:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M3 7l9 6.5L21 7"/>',
   lobby:'<path d="M12 6V9M10 5.5h4"/><path d="M5 17a7 7 0 0114 0z"/><path d="M3 20.5h18"/>',
   bulkhead:'<path class="f" stroke="none" fill-rule="evenodd" d="M3 9.5L21 6.5v3.5H3z M5 10h14v10.5H5z M9.5 13.5h5v7h-5z M16 12.5h1.8v2H16z"/><path d="M1.5 20.5h21"/>',
-  hvac:'<path d="M9.6 4.6A2 2 0 1111 8H2M12.6 19.4A2 2 0 1014 16H2M17.7 7.7A2.5 2.5 0 1119.5 12H2"/>'
+  hvac:'<path d="M9.6 4.6A2 2 0 1111 8H2M12.6 19.4A2 2 0 1014 16H2M17.7 7.7A2.5 2.5 0 1119.5 12H2"/>',
+
+  /* Weather set B (bold line, multicolor; colors baked in) */
+  wxsun:'<g stroke-width="2.5"><circle cx="12" cy="12" r="4.2" stroke="#FACC15"/><path d="M18.6 12.0L21.0 12.0M16.7 16.7L18.4 18.4M12.0 18.6L12.0 21.0M7.3 16.7L5.6 18.4M5.4 12.0L3.0 12.0M7.3 7.3L5.6 5.6M12.0 5.4L12.0 3.0M16.7 7.3L18.4 5.6" stroke="#FACC15"/></g>',
+  wxpart:'<g stroke-width="2.5"><circle cx="8" cy="8" r="3" stroke="#FACC15"/><path d="M4.2 11.8L3.1 12.9M2.6 8.0L1.0 8.0M4.2 4.2L3.1 3.1M8.0 2.6L8.0 1.0" stroke="#FACC15"/><path d="M8 19a3.8 3.8 0 01-.3-7.6A5 5 0 0117 13a3 3 0 010 6z" transform="translate(1 0.5)" fill="#0f0f0f" stroke="#94A3B8"/></g>',
+  wxcloud:'<g stroke-width="2.5"><path d="M7 18.5a4.5 4.5 0 01-.6-8.96A6 6 0 0118 10.5a4 4 0 010 8z" transform="translate(0 -1)" fill="#0f0f0f" stroke="#94A3B8"/></g>',
+  wxrain:'<g stroke-width="2.5"><path d="M7 18.5a4.5 4.5 0 01-.6-8.96A6 6 0 0118 10.5a4 4 0 010 8z" transform="translate(0 -4.5)" fill="#0f0f0f" stroke="#94A3B8"/><path d="M8.5 17l-1 3M12.5 17l-1 3M16.5 17l-1 3" stroke="#60A5FA"/></g>',
+  wxsnow:'<g stroke-width="2.5"><path d="M7 18.5a4.5 4.5 0 01-.6-8.96A6 6 0 0118 10.5a4 4 0 010 8z" transform="translate(0 -4.5)" fill="#0f0f0f" stroke="#94A3B8"/><path d="M8.5 18.5v.1M12.5 19.8v.1M16.5 18.5v.1M10.5 21.6v.1M14.5 21.6v.1" stroke="#BAE6FD" stroke-width="2.8"/></g>',
+  wxstorm:'<g stroke-width="2.5"><path d="M7 18.5a4.5 4.5 0 01-.6-8.96A6 6 0 0118 10.5a4 4 0 010 8z" transform="translate(0 -4.5)" fill="#0f0f0f" stroke="#94A3B8"/><path d="M12.8 13.5l-3 4.4h4.2l-2.2 4.4" stroke="#FBBF24"/></g>',
+  wxfog:'<g stroke-width="2.5"><path d="M7 18.5a4.5 4.5 0 01-.6-8.96A6 6 0 0118 10.5a4 4 0 010 8z" transform="translate(0 -6)" fill="#0f0f0f" stroke="#94A3B8"/><path d="M4.5 16h15M7.5 20.5h9" stroke="#94A3B8"/></g>',
 };
