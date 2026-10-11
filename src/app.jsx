@@ -548,14 +548,14 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
                 const stuck = elevatorStuck?.[car];
                 const statusCol = getCAColor("elev", car);
                 return (<g key={`car-${car}`} onClick={() => setEditingCA(`elev-${car}`)} style={{ cursor: "pointer" }}>
-                  <rect x={cx} y={cy} width={carW} height={uH} rx="5" fill={stuck ? "#ef5350" : elevColors[ci] || "#888"} stroke={stuck ? "#FF0" : "#FFF"} strokeWidth={stuck ? "3" : "2"} />
-                  {stuck && <><line x1={cx+4} y1={cy+4} x2={cx+carW-4} y2={cy+uH-4} stroke="#FF0" strokeWidth="2" /><line x1={cx+carW-4} y1={cy+4} x2={cx+4} y2={cy+uH-4} stroke="#FF0" strokeWidth="2" /></>}
-                  {/* elevator front: floor display on top, two sliding doors below */}
-                  <rect x={cx+10} y={cy+5} width={carW-22} height={12} rx="2" fill="#000000AA" />
-                  <text x={cx+10+(carW-22)/2} y={cy+14.5} textAnchor="middle" fill="#FFF" fontSize="10" fontWeight="900">{ci+1}</text>
-                  <rect x={cx+6} y={cy+20} width={(carW-12)/2-1} height={uH-26} rx="1.5" fill="#FFFFFF2E" stroke="#FFF" strokeWidth="1.4" />
-                  <rect x={cx+carW/2+1} y={cy+20} width={(carW-12)/2-1} height={uH-26} rx="1.5" fill="#FFFFFF2E" stroke="#FFF" strokeWidth="1.4" />
-                  <circle cx={cx+carW-6} cy={cy+6} r="5" fill={statusCol} stroke={statusCol==="#FFFFFF"?"#999":"#FFF"} strokeWidth="1" />
+                  {/* the elevator itself: car-colored doors with a center split, plus up / down arrows */}
+                  <rect x={cx} y={cy} width={30} height={uH} rx="4" fill={stuck ? "#ef5350" : elevColors[ci] || "#888"} stroke={stuck ? "#FF0" : "#FFF"} strokeWidth={stuck ? "3" : "2"} />
+                  <line x1={cx+15} y1={cy+19} x2={cx+15} y2={cy+uH-1} stroke="#FFF" strokeWidth="2" />
+                  {stuck && <><line x1={cx+4} y1={cy+4} x2={cx+26} y2={cy+uH-4} stroke="#FF0" strokeWidth="2" /><line x1={cx+26} y1={cy+4} x2={cx+4} y2={cy+uH-4} stroke="#FF0" strokeWidth="2" /></>}
+                  <rect x={cx+5} y={cy+4} width={20} height={12} rx="2" fill="#000000AA" />
+                  <text x={cx+15} y={cy+13.5} textAnchor="middle" fill="#FFF" fontSize="10" fontWeight="900">{ci+1}</text>
+                  <path d={`M${cx+33} ${cy+17} l5 -6 5 6 M${cx+33} ${cy+27} l5 6 5 -6`} fill="none" stroke="#FFF" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx={cx+29} cy={cy+3} r="5" fill={statusCol} stroke={statusCol==="#FFFFFF"?"#999":"#FFF"} strokeWidth="1" />
                   {stuck && <text x={cx+carW/2} y={cy+uH+11} textAnchor="middle" fill="#FF0" fontSize="7" fontWeight="800">STUCK</text>}
                 </g>);
               })}
