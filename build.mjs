@@ -1,15 +1,18 @@
 import { build } from "esbuild";
 import fs from "fs";
 
-const version = /APP_VERSION = "([^"]+)"/.exec(fs.readFileSync("src/app.jsx", "utf8"))[1];
-const r = await build({
-  entryPoints: ["src/app.jsx"], bundle: true, minify: true, write: false,
-  format: "iife", target: "es2020", jsx: "transform",
-  define: { "process.env.NODE_ENV": '"production"' }, legalComments: "none",
-});
-const js = r.outputFiles[0].text.replace(/<\/script/gi, "<\\/script");
-
-const page = ({ title, manifest, appTitle }) => `<!DOCTYPE html>
+const version = /APP_VERSION = "([^"]+)"/.exec(fs.readFileSync("src/shared.jsx", "utf8"))[1];
+const bundle = async (entry) => {
+  const r = await build({
+    entryPoints: [entry], bundle: true, minify: true, write: false,
+    format: "iife", target: "es2020", jsx: "transform",
+    define: { "process.env.NODE_ENV": '"production"' }, legalComments: "none",
+  });
+  return r.outputFiles[0].text.replace(/<\/script/gi, "<\\/script");
+};
+const jsBack = await bundle("src/app.jsx");     // back office
+const jsTenant = await bundle("src/tenant.jsx"); // tenant request page
+const page = ({ title, manifest, appTitle, js }) => `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -53,8 +56,8 @@ self.addEventListener("fetch", (e) => {
 });
 `;
 
-fs.writeFileSync("index.html", page({ title: "BuildTrack NYC", manifest: "manifest.webmanifest", appTitle: "BuildTrack" }));
-fs.writeFileSync("request.html", page({ title: "Repair Request", manifest: "manifest-tenant.webmanifest", appTitle: "Repair Request" }));
+fs.writeFileSync("index.html", page({ title: "BuildTrack NYC", manifest: "manifest.webmanifest", appTitle: "BuildTrack", js: jsBack }));
+fs.writeFileSync("request.html", page({ title: "Repair Request", manifest: "manifest-tenant.webmanifest", appTitle: "Repair Request", js: jsTenant }));
 fs.writeFileSync("manifest.webmanifest", manifest("BuildTrack NYC", "BuildTrack", "./index.html", "buildtrack-manager"));
 fs.writeFileSync("manifest-tenant.webmanifest", manifest("Repair Request", "Repairs", "./request.html", "buildtrack-tenant"));
 fs.writeFileSync("sw.js", sw);
