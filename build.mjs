@@ -15,7 +15,7 @@ const page = ({ title, manifest, appTitle }) => `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>${title}</title>
-<meta name="theme-color" content="#0A0A0E">
+<meta name="theme-color" content="#0f0f0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,7 +23,7 @@ const page = ({ title, manifest, appTitle }) => `<!DOCTYPE html>
 <link rel="manifest" href="${manifest}">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<style>*{margin:0;padding:0;box-sizing:border-box}html,body{height:100%}body{background:#0A0A0E}#root{height:100vh}
+<style>*{margin:0;padding:0;box-sizing:border-box}html,body{height:100%}body{background:#0f0f0f}#root{height:100vh}
 @media (max-width:800px){.bt-big{grid-template-columns:1fr !important}}</style>
 </head>
 <body>
@@ -34,7 +34,7 @@ const page = ({ title, manifest, appTitle }) => `<!DOCTYPE html>
 
 const manifest = (name, short, start, id) => JSON.stringify({
   name, short_name: short, id, start_url: start, scope: "./", display: "standalone",
-  background_color: "#0A0A0E", theme_color: "#0A0A0E", orientation: "any",
+  background_color: "#0f0f0f", theme_color: "#0f0f0f", orientation: "any",
   icons: [
     { src: "icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
     { src: "icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },

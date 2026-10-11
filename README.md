@@ -1,4 +1,4 @@
-# BuildTrack NYC — v2.5.0
+# BuildTrack NYC — v3.0.0
 
 Property maintenance and repair tracker. Installable web app (manager: `index.html`, tenants: `request.html`), works offline.
 
