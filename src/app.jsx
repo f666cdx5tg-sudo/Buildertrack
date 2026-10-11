@@ -760,7 +760,7 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
   );
 };
 // ▸ Unit Detail Modal
-const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicketChange, onNewTicket }) => {
+const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicketChange, onNewTicket, isHouse }) => {
   useEffect(() => {
     const h = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", h);
@@ -853,8 +853,8 @@ const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicke
       <div style={S.modalInner} onClick={e => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <div>
-            <h2 style={{ fontFamily: font, color: PK, margin: 0, fontSize: 20 }}>UNIT {unit.unit}{!unit.vacant && tenantName ? <span style={{ color: TXT, fontSize: 15, fontWeight: 600 }}> · {tenantName}</span> : null}</h2>
-            <span style={S.tag(unit.vacant ? PK3 : AG)}>{unit.vacant ? "VACANT" : "OCCUPIED"}</span>
+            <h2 style={{ fontFamily: font, color: PK, margin: 0, fontSize: 20 }}>{isHouse ? unit.unit.toUpperCase() : "UNIT " + unit.unit}{!unit.vacant && tenantName ? <span style={{ color: TXT, fontSize: 15, fontWeight: 600 }}> · {tenantName}</span> : null}</h2>
+            {!isHouse && <span style={S.tag(unit.vacant ? PK3 : AG)}>{unit.vacant ? "VACANT" : "OCCUPIED"}</span>}
             {openTickets.length > 0 && <span style={{ ...S.tag(openTickets.some(t => t.priority === "Urgent") ? PK2 : PK), marginLeft: 6 }}>{openTickets.length} OPEN TICKET{openTickets.length > 1 ? "S" : ""}</span>}
           </div>
           <button style={S.btn()} onClick={onClose}><Icon n="close" /> Close</button>
@@ -869,11 +869,11 @@ const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicke
         {tab === "overview" && (
           <div>
             <div style={S.card}>
-              <div style={S.cardTitle}>Tenant</div>
+              <div style={S.cardTitle}>{isHouse ? "Occupant / contact" : "Tenant"}</div>
               {unit.vacant ? <div style={{ color: TXT2, fontSize: 13 }}>This unit is marked vacant.</div> : (
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 700 }}>{tenantName || "No tenant name on file"}</div>
-                  <div style={{ fontSize: 13, color: TXT2, margin: "2px 0 10px" }}>{unit.contact.phone || "No phone"} · {email || "No email"} · Floor {unit.floor}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700 }}>{tenantName || (isHouse ? "No occupant on file" : "No tenant name on file")}</div>
+                  <div style={{ fontSize: 13, color: TXT2, margin: "2px 0 10px" }}>{unit.contact.phone || "No phone"} · {email || "No email"} · {isHouse ? (unit.level || "") : "Floor " + unit.floor}</div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {phoneDigits && <a href={`tel:${phoneDigits}`} style={linkBtn}><Icon n="tel" /> Call</a>}
                     {phoneDigits && <a href={`sms:${phoneDigits}`} style={linkBtn}><Icon n="chat" /> Text</a>}
@@ -944,7 +944,7 @@ const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicke
               <div><label style={S.label}>Last Name</label><input style={S.input} value={unit.contact.last} onChange={e => handleContactUpdate("last", e.target.value)} /></div>
               <div><label style={S.label}>Phone</label><input style={S.input} value={unit.contact.phone} onChange={e => handleContactUpdate("phone", e.target.value)} /></div>
               <div><label style={S.label}>Email</label><input style={S.input} value={unit.contact.email} onChange={e => handleContactUpdate("email", e.target.value)} /></div>
-              <div><label style={S.label}>Unit Number</label><input style={S.input} value={unit.unit} readOnly /></div>
+              <div><label style={S.label}>{isHouse ? "Room" : "Unit Number"}</label><input style={S.input} value={unit.unit} readOnly /></div>
               <div><label style={S.label}>Floor</label><input style={S.input} value={unit.floor} readOnly /></div>
             </div>
             <div style={{ marginTop: 12 }}>
@@ -2046,11 +2046,70 @@ const TicketsPanel = ({ tickets, onOpen, connected }) => {
   );
 };
 
+// ─── HOUSES (single-family): "units" are rooms, grouped by level ──────────────
+const blankTrades = () => { const t = {}; TRADES.forEach(n => { t[n] = { status: "Pending", phase: "Pending", contractor: "", scheduled: false, accessDenied: false }; }); return t; };
+const blankUnit = (id, name, floor, level) => ({ id, unit: name, floor, level, vacant: false, contact: { first: "", last: "", phone: "", email: "" }, trades: blankTrades(), comments: [], photos: [], notices: [] });
+const ordinal = (n) => n === 1 ? "1st Floor" : n === 2 ? "2nd Floor" : n === 3 ? "3rd Floor" : n + "th Floor";
+const generateHouseRooms = ({ stories = 2, beds = 3, baths = 2, basement = true, attic = false, garage = false }) => {
+  const rooms = [];
+  const add = (name, floor, level) => rooms.push({ name, floor, level });
+  ["Entry", "Living Room", "Kitchen", "Dining Room"].forEach(n => add(n, 1, ordinal(1)));
+  const sleep = stories === 1 ? [1] : Array.from({ length: stories - 1 }, (_, i) => i + 2);
+  for (let i = 0; i < beds; i++) { const f = sleep[i % sleep.length]; add(i === 0 ? "Primary Bedroom" : `Bedroom ${i + 1}`, f, ordinal(f)); }
+  for (let i = 0; i < baths; i++) { const f = sleep[i % sleep.length]; add(i === 0 ? "Primary Bath" : `Bathroom ${i + 1}`, f, ordinal(f)); }
+  if (basement) ["Basement", "Laundry", "Utility Room"].forEach(n => add(n, 0, "Basement"));
+  if (attic) add("Attic", 99, "Attic");
+  if (garage) add("Garage", -1, "Garage");
+  return rooms.map((r, i) => blankUnit(i + 1, r.name, r.floor, r.level));
+};
+const UnitMap = (p) => p.isHouse ? <HouseMap {...p} /> : <UnitGrid {...p} />;
+const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddRoom }) => {
+  const levels = {};
+  units.forEach(u => { (levels[u.floor] = levels[u.floor] || { label: u.level || ("Level " + u.floor), rooms: [] }).rooms.push(u); });
+  const order = Object.keys(levels).map(Number).sort((a, b) => b - a);
+  const OL = "#3b4a63";
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0, maxWidth: 900, margin: "0 auto" }}>
+      {/* roof */}
+      <div style={{ height: 0, borderLeft: "40px solid transparent", borderRight: "40px solid transparent", borderBottom: "0 solid transparent" }} />
+      <div style={{ clipPath: "polygon(8% 100%, 50% 0, 92% 100%)", background: "#2a3446", height: 46, margin: "0 auto", width: "70%", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 6, color: "#B4BCC8", fontSize: 11, fontWeight: 700, letterSpacing: 2 }}>ROOF</div>
+      <div style={{ border: `2px solid ${OL}`, borderRadius: 6, background: "#0b1220", overflow: "hidden" }}>
+        {order.map((f, i) => {
+          const lv = levels[f];
+          return (
+            <div key={f} style={{ display: "flex", borderTop: i ? `1px solid ${OL}` : "none", minHeight: 84 }}>
+              <div style={{ width: 92, flexShrink: 0, background: "#11182780", borderRight: `1px solid ${OL}`, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 6, fontFamily: font, fontSize: 12, fontWeight: 700, color: "#9ec1ff" }}>{lv.label}</div>
+              <div style={{ flex: 1, display: "flex", flexWrap: "wrap", gap: 8, padding: 10, alignItems: "stretch" }}>
+                {lv.rooms.map(u => {
+                  const color = tradeFilter ? (u.vacant ? STATUS_COLORS["Vacant"] : getTradeColor(u.trades[tradeFilter]?.status)) : getUnitColor(u);
+                  const sel = selectedId === u.id;
+                  const hasAcc = Object.values(u.trades).some(t => t.accessDenied && t.scheduled);
+                  const tk = ticketInfo?.[u.unit.toUpperCase()];
+                  return (
+                    <button key={u.id} onClick={() => onSelect(u)} style={{ position: "relative", minWidth: 110, flex: "1 1 110px", maxWidth: 190, minHeight: 60, borderRadius: 8, background: color, border: sel ? "3px solid #FFF" : `1px solid ${OL}`, color: color === "#FFFFFF" || color === "#F1C40F" ? "#000" : "#FFF", fontFamily: font, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 8px" }}>
+                      {u.unit}
+                      {hasAcc && <span style={{ position: "absolute", top: 5, right: 5, width: 9, height: 9, borderRadius: 5, background: "#ef5350", border: "1px solid #0b1220" }} />}
+                      {tk && <span style={{ position: "absolute", left: 5, bottom: 5, minWidth: 16, height: 16, borderRadius: 8, background: tk.urgent ? "#ef5350" : PK, color: "#000", fontSize: 10, lineHeight: "16px", textAlign: "center", padding: "0 3px" }}>{tk.open}</span>}
+                    </button>
+                  );
+                })}
+                <button onClick={() => onAddRoom(f, lv.label)} style={{ minWidth: 80, minHeight: 60, borderRadius: 8, background: "transparent", border: `1.5px dashed ${OL}`, color: TXT2, fontFamily: font, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>+ Room</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ height: 10, background: "#1f2937", borderRadius: "0 0 6px 6px", margin: "0 -6px" }} />
+    </div>
+  );
+};
+
 // ─── PROPERTIES (portfolio) ─────────────────────────────────────────────────
 const summarize = (st) => {
-  if (!st || !st.units) return { demo: true, units: 40, inProgress: 0, complete: 0, access: 0, openTickets: 0, pct: 0 };
+  if (!st || !st.units) return { type: "multifamily", demo: true, units: 40, inProgress: 0, complete: 0, access: 0, openTickets: 0, pct: 0 };
   const units = fixUnits(st.units);
   return {
+    type: st.propType || "multifamily",
     demo: st.demoMode !== false,
     units: units.length,
     inProgress: units.filter(u => unitBucket(u) === "In Progress").length,
@@ -2064,9 +2123,10 @@ const summarize = (st) => {
 const PropertiesView = ({ list, activeId, live, summaries, onOpen, onAdd, onDelete, onEdit }) => {
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [f, setF] = useState({ name: "", address: "", floors: 5, perFloor: 8, format: "alpha" });
+  const blankForm = { type: "multifamily", name: "", address: "", floors: 5, perFloor: 8, format: "alpha", stories: 2, beds: 3, baths: 2, basement: true, attic: false, garage: false };
+  const [f, setF] = useState(blankForm);
   const [e, setE] = useState({ name: "", address: "" });
-  const create = () => { if (!f.name.trim()) return; onAdd({ ...f, name: f.name.trim(), address: f.address.trim() }); setAdding(false); setF({ name: "", address: "", floors: 5, perFloor: 8, format: "alpha" }); };
+  const create = () => { if (!f.name.trim()) return; onAdd({ ...f, name: f.name.trim(), address: f.address.trim() }); setAdding(false); setF(blankForm); };
   const stat = (label, value, color) => (
     <div style={{ flex: 1, minWidth: 0 }}>
       <div style={{ fontFamily: font, fontSize: 20, fontWeight: 600, lineHeight: 1.1, color: color || TXT }}>{value}</div>
@@ -2086,17 +2146,32 @@ const PropertiesView = ({ list, activeId, live, summaries, onOpen, onAdd, onDele
       {adding && (
         <div style={{ ...S.card, border: `1px solid ${AG}66` }}>
           <div style={S.cardTitle}>New property</div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <button style={{ ...S.btn(f.type === "multifamily" ? "primary" : undefined), flex: 1 }} onClick={() => setF({ ...f, type: "multifamily" })}><Icon n="building" /> Multifamily building</button>
+            <button style={{ ...S.btn(f.type === "house" ? "primary" : undefined), flex: 1 }} onClick={() => setF({ ...f, type: "house" })}><Icon n="home" /> House</button>
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-            <div><label style={S.label}>Name</label><input style={S.input} autoFocus value={f.name} onChange={ev => setF({ ...f, name: ev.target.value })} placeholder="e.g. 220 Mercer St" /></div>
+            <div><label style={S.label}>Name</label><input style={S.input} autoFocus value={f.name} onChange={ev => setF({ ...f, name: ev.target.value })} placeholder={f.type === "house" ? "e.g. 14 Oak Lane" : "e.g. 220 Mercer St"} /></div>
             <div><label style={S.label}>Address</label><input style={S.input} value={f.address} onChange={ev => setF({ ...f, address: ev.target.value })} placeholder="Street, city" /></div>
-            <div><label style={S.label}>Floors</label><input style={S.input} type="number" min="1" max="60" value={f.floors} onChange={ev => setF({ ...f, floors: Math.max(1, Math.min(60, +ev.target.value || 1)) })} /></div>
-            <div><label style={S.label}>Units per floor</label><input style={S.input} type="number" min="1" max="26" value={f.perFloor} onChange={ev => setF({ ...f, perFloor: Math.max(1, Math.min(26, +ev.target.value || 1)) })} /></div>
-            <div><label style={S.label}>Unit numbering</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button style={{ ...S.btn(f.format === "alpha" ? "primary" : undefined), flex: 1 }} onClick={() => setF({ ...f, format: "alpha" })}>Alpha (1A)</button>
-                <button style={{ ...S.btn(f.format === "numeric" ? "primary" : undefined), flex: 1 }} onClick={() => setF({ ...f, format: "numeric" })}>Numeric (101)</button>
+            {f.type === "multifamily" ? (<>
+              <div><label style={S.label}>Floors</label><input style={S.input} type="number" min="1" max="60" value={f.floors} onChange={ev => setF({ ...f, floors: Math.max(1, Math.min(60, +ev.target.value || 1)) })} /></div>
+              <div><label style={S.label}>Units per floor</label><input style={S.input} type="number" min="1" max="26" value={f.perFloor} onChange={ev => setF({ ...f, perFloor: Math.max(1, Math.min(26, +ev.target.value || 1)) })} /></div>
+              <div><label style={S.label}>Unit numbering</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button style={{ ...S.btn(f.format === "alpha" ? "primary" : undefined), flex: 1 }} onClick={() => setF({ ...f, format: "alpha" })}>Alpha (1A)</button>
+                  <button style={{ ...S.btn(f.format === "numeric" ? "primary" : undefined), flex: 1 }} onClick={() => setF({ ...f, format: "numeric" })}>Numeric (101)</button>
+                </div>
               </div>
-            </div>
+            </>) : (<>
+              <div><label style={S.label}>Stories</label><input style={S.input} type="number" min="1" max="3" value={f.stories} onChange={ev => setF({ ...f, stories: Math.max(1, Math.min(3, +ev.target.value || 1)) })} /></div>
+              <div><label style={S.label}>Bedrooms</label><input style={S.input} type="number" min="1" max="8" value={f.beds} onChange={ev => setF({ ...f, beds: Math.max(1, Math.min(8, +ev.target.value || 1)) })} /></div>
+              <div><label style={S.label}>Bathrooms</label><input style={S.input} type="number" min="1" max="6" value={f.baths} onChange={ev => setF({ ...f, baths: Math.max(1, Math.min(6, +ev.target.value || 1)) })} /></div>
+              <div><label style={S.label}>Also has</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[["basement", "Basement"], ["attic", "Attic"], ["garage", "Garage"]].map(([k, l]) => <button key={k} style={{ ...S.btn(f[k] ? "primary" : undefined), flex: 1, padding: "12px 8px" }} onClick={() => setF({ ...f, [k]: !f[k] })}>{l}</button>)}
+                </div>
+              </div>
+            </>)}
           </div>
           <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
             <button style={S.btn("primary")} onClick={create} disabled={!f.name.trim()}>Create property</button>
@@ -2128,11 +2203,12 @@ const PropertiesView = ({ list, activeId, live, summaries, onOpen, onAdd, onDele
                     <div style={{ color: TXT2, fontSize: 13, marginTop: 2 }}>{p.address || "No address"}</div>
                   </div>
                   {isActive && <span style={S.tag(AG)}>OPEN NOW</span>}
+                  <span style={S.tag(TXT2)}>{(p.type || sm.type) === "house" ? "HOUSE" : "MULTIFAMILY"}</span>
                   {sm.demo && <span style={S.tag(PK)}>DEMO</span>}
                 </div>
               )}
               <div style={{ display: "flex", gap: 10 }}>
-                {stat("Units", sm.units)}
+                {stat((p.type || sm.type) === "house" ? "Rooms" : "Units", sm.units)}
                 {stat("In progress", sm.inProgress, "#F1C40F")}
                 {stat("Complete", sm.complete, "#66bb6a")}
                 {stat("Tickets", sm.openTickets, sm.openTickets ? PK : TXT)}
@@ -2157,6 +2233,8 @@ const PropertiesView = ({ list, activeId, live, summaries, onOpen, onAdd, onDele
 
 // ─── MAIN APP ───────────────────────────────────────────────────────────────
 function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwitch, onAddProp, onDeleteProp, onEditProp }) {
+  const propType = saved?.propType || "multifamily";
+  const isHouse = propType === "house";
   const [unitFormat, setUnitFormat] = useState(saved?.unitFormat || "alpha");
   const [floorCount, setFloorCount] = useState(saved?.floorCount || 5);
   const [perFloor, setPerFloor] = useState(saved?.perFloor || 8);
@@ -2205,8 +2283,13 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
 
   const progress = Object.fromEntries(TRADES.map(t => [t, calcProgress(units, t)]));
 
-  const snapshot = () => ({ units, schedule, commonAreas, areaList, showAreas, enabledItems, elevatorFloors, elevatorStuck, projectName, unitFormat, floorCount, perFloor, events, demoMode, tickets });
+  const snapshot = () => ({ units, schedule, commonAreas, areaList, showAreas, enabledItems, elevatorFloors, elevatorStuck, projectName, unitFormat, floorCount, perFloor, events, demoMode, tickets, propType });
 
+  const addRoom = (floor, level) => {
+    const name = (prompt("Room name?") || "").trim();
+    if (!name) return;
+    setUnits(prev => [...prev, blankUnit(prev.reduce((m, u) => Math.max(m, u.id), 0) + 1, name, floor, level)]);
+  };
   const flushSave = () => idb.set("state:" + activeId, { ...snapshot(), savedAt: Date.now() }).catch(() => {});
   const openProperty = async (id) => { await flushSave(); await onSwitch(id, id === activeId ? "dashboard" : "dashboard"); };
   const addProperty = async (form) => { await flushSave(); await onAddProp(form); };
@@ -2215,7 +2298,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
     if (id !== activeId) await flushSave();
     await onDeleteProp(id);
   };
-  const liveSummary = { ...summarize({ units, tickets, demoMode }), name: projectName };
+  const liveSummary = { ...summarize({ units, tickets, demoMode, propType }), name: projectName };
   useEffect(() => { onEditProp(activeId, { name: projectName }); }, [projectName]);
 
   // Auto-save (debounced) so a refresh never wipes the project.
@@ -2376,7 +2459,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
     { id: "tickets", label: "Tickets", icon: "ticket", badge: newTicketCount },
     { id: "schedule", label: "Schedule", icon: "calendar" },
     { id: "field", label: "Field Monitor", icon: "signal" },
-    { id: "common", label: "Common Areas", icon: "building" },
+    { id: "common", label: isHouse ? "Areas" : "Common Areas", icon: "building" },
     { id: "notices", label: "Notices", icon: "clipboard" },
   ];
 
@@ -2468,7 +2551,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
           </div>
 
           {/* Building Config Section */}
-          {sidebarOpen && (
+          {sidebarOpen && !isHouse && (
             <div style={{ padding: "8px", borderTop: `1px solid ${BD}`, flexShrink: 0 }}>
               <div style={{ fontFamily: font, fontSize: 14, color: AG, textTransform: "uppercase", letterSpacing: 1, padding: "4px 8px", fontWeight: 700 }}>Building Setup</div>
 
@@ -2618,7 +2701,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
           <div>
             <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginBottom: 12 }}>
               {[
-                { label: "Total Units", value: units.length, color: PK },
+                { label: isHouse ? "Total Rooms" : "Total Units", value: units.length, color: PK },
                 { label: "Pending", value: units.filter(u => unitBucket(u) === "Pending").length, color: "#FFFFFF" },
                 { label: "Started", value: units.filter(u => unitBucket(u) === "Started").length, color: "#A78BFA" },
                 { label: "In Progress", value: units.filter(u => unitBucket(u) === "In Progress").length, color: "#F1C40F" },
@@ -2634,9 +2717,9 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
             </div>
 
             <div style={S.card}>
-              <div style={S.cardTitle}>Unit Map</div>
+              <div style={S.cardTitle}>{isHouse ? "House Map" : "Unit Map"}</div>
               <Legend />
-              <UnitGrid units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
+              <UnitMap isHouse={isHouse} onAddRoom={addRoom} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
             </div>
 
             <TicketsPanel tickets={tickets} connected={!!ticketCfg.url} onOpen={() => setPage("tickets")} />
@@ -2684,7 +2767,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
 
             <div style={S.card}>
               <div style={S.cardTitle}>{tradeFilter} Unit Map</div>
-              <UnitGrid units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
+              <UnitMap isHouse={isHouse} onAddRoom={addRoom} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
             </div>
           </div>
         )}
@@ -2698,7 +2781,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
         </div>
       </div>
 
-      {selectedUnit && <UnitModal unit={selectedUnit} onClose={() => setSelectedUnit(null)} onUpdate={updateUnit} projectName={projectName} tickets={tickets} onTicketChange={updateTicket} onNewTicket={(label) => { setSelectedUnit(null); setPage("tickets"); setTicketPrefill(label); }} />}
+      {selectedUnit && <UnitModal isHouse={isHouse} unit={selectedUnit} onClose={() => setSelectedUnit(null)} onUpdate={updateUnit} projectName={projectName} tickets={tickets} onTicketChange={updateTicket} onNewTicket={(label) => { setSelectedUnit(null); setPage("tickets"); setTicketPrefill(label); }} />}
     </div>
   );
 }
@@ -2751,12 +2834,14 @@ function Root() {
   const switchTo = async (id, page) => { await idb.set("activeProp", id).catch(() => {}); await loadAll(propList, id, page || "dashboard"); };
   const addProp = async (form) => {
     const id = "p" + Date.now().toString(36);
+    const house = form.type === "house";
     const st = {
-      units: generateUnits(form.floors, form.perFloor, form.format, false), schedule: generateSchedule(false),
-      commonAreas: {}, events: [], elevatorFloors: {}, elevatorStuck: {}, tickets: [], demoMode: false,
-      projectName: form.name, unitFormat: form.format, floorCount: form.floors, perFloor: form.perFloor, savedAt: Date.now(),
+      units: house ? generateHouseRooms(form) : generateUnits(form.floors, form.perFloor, form.format, false), schedule: generateSchedule(false),
+      commonAreas: {}, events: [], elevatorFloors: {}, elevatorStuck: {}, tickets: [], demoMode: false, propType: house ? "house" : "multifamily",
+      projectName: form.name, unitFormat: form.format, floorCount: house ? form.stories : form.floors, perFloor: house ? 0 : form.perFloor, savedAt: Date.now(),
+      ...(house ? { areaList: DEFAULT_COMMON_AREAS.filter(a => a.id !== "elev"), showAreas: { elev: false, roof: true, base: true, grnd: true } } : {}),
     };
-    const list = [...propList, { id, name: form.name, address: form.address, addedAt: Date.now() }];
+    const list = [...propList, { id, name: form.name, address: form.address, type: house ? "house" : "multifamily", addedAt: Date.now() }];
     await idb.set("state:" + id, st); await idb.set("props", list); await idb.set("activeProp", id);
     await loadAll(list, id, "dashboard");
   };
