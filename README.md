@@ -1,6 +1,6 @@
-# BuildTrack NYC — v2.4.0
+# BuildTrack NYC — v2.5.0
 
-Property maintenance and repair tracker. Single-file app (`index.html`) works offline.
+Property maintenance and repair tracker. Installable web app (manager: `index.html`, tenants: `request.html`), works offline.
 
 ## What it does
 - Building map: tap any unit for the full tenant view (contact + call/text/email, open work tickets, trade status, notes, notices).
@@ -18,3 +18,7 @@ npm install
 npm run build     # bundles src/app.jsx into index.html
 ```
 The version is `APP_VERSION` at the top of `src/app.jsx` — bump it on every change.
+
+## Install as an app
+Open the live site, then Chrome/Android: menu → Install app. iPhone Safari: Share → Add to Home Screen.
+Tenants use `request.html` (the link/QR shown in Tickets → Server), which installs as "Repair Request".

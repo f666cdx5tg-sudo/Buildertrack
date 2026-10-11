@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import qrcode from "qrcode-generator";
 
-const APP_VERSION = "2.4.0";
+const APP_VERSION = "2.5.0";
 const DEFAULT_PROJECT = "456 Grand Ave — Full Building Renovation";
 
 // ─── DATA & CONSTANTS ───────────────────────────────────────────────────────
@@ -1780,10 +1780,12 @@ const DEMO_TICKETS = () => {
 const TenantRequest = () => {
   useEffect(() => { document.title = "Repair Request"; }, []);
   const params = new URLSearchParams(window.location.hash.replace(/^#request[?&]?/, ""));
-  const apiUrl = params.get("api") || "";
-  const building = params.get("b") || "Building Maintenance";
   const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  // The link carries the server + building name; remember them so the installed app (which opens without the link) still works.
+  const apiUrl = params.get("api") || lsGet("bt_api", "");
+  const building = params.get("b") || lsGet("bt_building", "") || "Building Maintenance";
+  if (params.get("api")) { lsSet("bt_api", params.get("api")); lsSet("bt_building", params.get("b") || ""); }
   const me = lsGet("bt_tenant", {});
   const [f, setF] = useState({ unit: me.unit || "", name: me.name || "", phone: me.phone || "", description: "", urgent: false, enter: me.enter ?? true, website: "" });
   const [photo, setPhoto] = useState("");
@@ -1929,7 +1931,7 @@ const TicketSettings = ({ cfg, onSave, projectName, syncState }) => {
   const [key, setKey] = useState(cfg.key || "");
   const [msg, setMsg] = useState("");
   const base = `${window.location.origin}${window.location.pathname}`;
-  const link = cfg.url ? `${base}#request?api=${encodeURIComponent(cfg.url)}&b=${encodeURIComponent(projectName)}` : "";
+  const link = cfg.url ? `${new URL("request.html", window.location.href).href.split("#")[0]}#request?api=${encodeURIComponent(cfg.url)}&b=${encodeURIComponent(projectName)}` : "";
   const isFile = window.location.protocol === "file:";
   let qrSvg = "";
   if (link && !isFile) {
@@ -2751,8 +2753,11 @@ function App({ saved, savedCfg }) {
 }
 
 function Root() {
-  const isTenant = /^#request/.test(window.location.hash);
+  const isTenant = /^#request/.test(window.location.hash) || /\/request(\.html)?\/?$/.test(window.location.pathname);
   const [state, setState] = useState({ loaded: false, saved: null, cfg: null });
+  useEffect(() => {
+    if ("serviceWorker" in navigator && /^https?:/.test(window.location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {});
+  }, []);
   useEffect(() => {
     const h = () => window.location.reload();
     window.addEventListener("hashchange", h);

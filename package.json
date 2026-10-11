@@ -2,7 +2,7 @@
   "name": "buildtrack-nyc",
   "version": "2.4.0",
   "scripts": {
-    "build": "node build.mjs && cp dist-BuildTrack-NYC.html index.html"
+    "build": "node build.mjs"
   },
   "dependencies": {
     "esbuild": "^0.28.2",
