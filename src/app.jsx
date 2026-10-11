@@ -272,6 +272,8 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
   const [editingCA, setEditingCA] = useState(null);
+  const [mapView, setMapView] = useState(() => { try { return localStorage.getItem("bt_mapview") || (window.innerWidth < 700 ? "units" : "building"); } catch (e) { return "building"; } });
+  const pickView = (v) => { setMapView(v); try { localStorage.setItem("bt_mapview", v); } catch (e) {} };
   const maxFloor = Math.max(...units.map(u => u.floor));
   const perFloor = Math.ceil(units.length / maxFloor);
 
@@ -327,16 +329,48 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
   return (
     <div>
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
-        <input style={{ ...S.input, width: 160 }} placeholder="Search unit or name..." value={search} onChange={e => setSearch(e.target.value)} />
+        <input style={{ ...S.input, flex: "1 1 130px", width: "auto", minWidth: 0 }} placeholder="Search unit or name..." value={search} onChange={e => setSearch(e.target.value)} />
         <select style={S.select} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="">All Status</option>
           <option>Vacant</option><option>Pending</option><option>Started</option><option>In Progress</option><option>Complete</option>
         </select>
-        <span style={{ fontSize: 11, color: TXT2, fontFamily: font }}>{filtered.length} / {units.length} units</span>
+        <span style={{ fontSize: 12, color: TXT2, fontFamily: font }}>{filtered.length} / {units.length} units</span>
+        {!tradeFilter && (
+          <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
+            <button style={{ ...S.tab(mapView === "units"), display: "inline-flex", alignItems: "center", gap: 6 }} onClick={() => pickView("units")}><Icon n="tiles" /> Units</button>
+            <button style={{ ...S.tab(mapView === "building"), display: "inline-flex", alignItems: "center", gap: 6 }} onClick={() => pickView("building")}><Icon n="building" /> Building</button>
+          </div>
+        )}
       </div>
 
+      {(mapView === "units" && !tradeFilter) ? (
+        <div>
+          {floorNums.map(fn => (
+            <div key={fn} style={{ marginBottom: 14 }}>
+              <div style={{ fontFamily: font, fontSize: 12, fontWeight: 700, color: TXT2, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>{fn === 1 ? "Lobby / Floor 1" : `Floor ${fn}`}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))", gap: 8 }}>
+                {floors[fn].slice().sort((x, y) => x.unit.localeCompare(y.unit, undefined, { numeric: true })).map(u => {
+                  const col = u._color || getUnitColor(u);
+                  const ti = ticketInfo?.[u.unit.toUpperCase()];
+                  const denied = Object.values(u.trades).some(tr => tr.accessDenied && tr.scheduled);
+                  const nm = u.vacant ? "Vacant" : (`${u.contact.first || ""} ${u.contact.last || ""}`.trim() || "No name");
+                  return (
+                    <button key={u.id} onClick={() => onSelect(u)} style={{ position: "relative", textAlign: "left", background: BG3, border: `1.5px solid ${selectedId === u.id ? "#fff" : BD}`, borderLeft: `7px solid ${col}`, borderRadius: 12, padding: "10px 10px 10px 10px", minHeight: 64, cursor: "pointer", color: TXT, fontFamily: font, opacity: filteredIds.has(u.id) ? 1 : 0.25 }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.1 }}>{u.unit}</div>
+                      <div style={{ fontSize: 12, color: TXT2, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{nm}</div>
+                      {ti && <span style={{ position: "absolute", top: 6, right: 6, minWidth: 20, height: 20, borderRadius: 10, padding: "0 5px", background: ti.urgent ? PK2 : PK, color: ti.urgent ? "#fff" : "#000", fontSize: 12, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{ti.open}</span>}
+                      {denied && <span title="Access denied" style={{ position: "absolute", bottom: 8, right: 8, width: 9, height: 9, borderRadius: "50%", background: PK2 }} />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+
       <div style={{ overflow: "auto" }}>
-        <svg viewBox={`0 0 ${totalW} ${totalH}`} style={{ width: "100%", minWidth: 580, maxWidth: 1200 }}
+        <svg viewBox={`0 0 ${totalW} ${totalH}`} style={{ width: "100%", minWidth: Math.min(totalW, 760), maxWidth: 1200 }}
           xmlns="http://www.w3.org/2000/svg" fontFamily={font}>
 
           {/* ═══ MAIN ROOF SECTION ═══ */}
@@ -663,6 +697,7 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
 
         </svg>
       </div>
+      )}
 
       {/* ═══ COMMON AREA EDIT POPUP ═══ */}
       {editingCA && (
@@ -2374,16 +2409,7 @@ function App({ saved, savedCfg }) {
         {/* Dashboard */}
         {page === "dashboard" && (
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
-              <div>
-                <h2 style={{ fontFamily: font, color: TXT, margin: 0, fontSize: 16 }}>BUILDING OVERVIEW</h2>
-                <span style={{ fontSize: 12, color: TXT2 }}>{units.length} units • Click any unit for details</span>
-              </div>
-            </div>
-            <TicketsPanel tickets={tickets} connected={!!ticketCfg.url} onOpen={() => setPage("tickets")} />
-            <Legend />
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 10, marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginBottom: 12 }}>
               {[
                 { label: "Total Units", value: units.length, color: PK },
                 { label: "Pending", value: units.filter(u => unitBucket(u) === "Pending").length, color: "#FFFFFF" },
@@ -2393,17 +2419,20 @@ function App({ saved, savedCfg }) {
                 { label: "Vacant", value: units.filter(u => unitBucket(u) === "Vacant").length, color: "#FF8C00" },
                 { label: "Access Issues", value: units.filter(u => Object.values(u.trades).some(t => t.accessDenied && t.scheduled)).length, color: "#ef5350" },
               ].map(stat => (
-                <div key={stat.label} style={{ ...S.card, textAlign: "center", padding: 12 }}>
-                  <div style={{ fontFamily: font, fontSize: 32, fontWeight: 800, color: stat.color }}>{stat.value}</div>
-                  <div style={{ fontSize: 11, color: TXT2, textTransform: "uppercase", fontFamily: font, letterSpacing: 1 }}>{stat.label}</div>
+                <div key={stat.label} style={{ ...S.card, textAlign: "center", padding: "8px 14px", marginBottom: 0, minWidth: 92, flexShrink: 0 }}>
+                  <div style={{ fontFamily: font, fontSize: 26, fontWeight: 800, lineHeight: 1.1, color: stat.color }}>{stat.value}</div>
+                  <div style={{ fontSize: 10, color: TXT2, textTransform: "uppercase", fontFamily: font, letterSpacing: 0.5, whiteSpace: "nowrap" }}>{stat.label}</div>
                 </div>
               ))}
             </div>
 
             <div style={S.card}>
               <div style={S.cardTitle}>Unit Map</div>
+              <Legend />
               <UnitGrid units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
             </div>
+
+            <TicketsPanel tickets={tickets} connected={!!ticketCfg.url} onOpen={() => setPage("tickets")} />
           </div>
         )}
 
