@@ -14,7 +14,7 @@ const TRADE_ICONS = { "Plumbing":"faucet2","Carpentry":"hammer","Windows":"windo
 const TRADE_COLORS = { "Plumbing":"#42a5f5","Carpentry":"#d4a373","Windows":"#66bb6a","Electrical":"#FFD60A","Painting":"#bf5af2","Heating":"#ff7043","Cooling":"#80deea","Tiling":"#f06292","Appliances":"#26a69a","Minor Repairs":"#b0bec5","Major Repairs":"#ef5350" };
 const TRADES = ["Plumbing","Carpentry","Windows","Electrical","Painting","Heating","Cooling","Tiling","Appliances","Minor Repairs","Major Repairs"];
 const PHASES = ["Pending","Demolition","Rough-In","Installation","Finishing","Inspection","Complete"];
-const STATUS_COLORS = { "Pending":"#FFFFFF", "Started":"#38BDF8", "In Progress":"#F1C40F", "Complete":"#66bb6a", "Vacant":"#FF8C00" };
+const STATUS_COLORS = { "Pending":"#FFFFFF", "Started":"#A78BFA", "In Progress":"#F1C40F", "Complete":"#66bb6a", "Vacant":"#FF8C00" };
 const DEFAULT_COMMON_AREAS = [
   { id:"elev", label:"Elevators", icon:"elevator", items:["Car 1","Car 2","Car 3","Car 4"] },
   { id:"roof", label:"Roof", icon:"roof", items:["Main Roof","Bulkhead","Water Tower","Antenna Platform"] },
@@ -2482,7 +2482,7 @@ function App({ saved, savedCfg }) {
               {[
                 { label: "Total Units", value: units.length, color: PK },
                 { label: "Pending", value: units.filter(u => unitBucket(u) === "Pending").length, color: "#FFFFFF" },
-                { label: "Started", value: units.filter(u => unitBucket(u) === "Started").length, color: "#38BDF8" },
+                { label: "Started", value: units.filter(u => unitBucket(u) === "Started").length, color: "#A78BFA" },
                 { label: "In Progress", value: units.filter(u => unitBucket(u) === "In Progress").length, color: "#F1C40F" },
                 { label: "Completed", value: units.filter(u => unitBucket(u) === "Complete").length, color: "#66bb6a" },
                 { label: "Vacant", value: units.filter(u => unitBucket(u) === "Vacant").length, color: "#FF8C00" },
