@@ -625,7 +625,7 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
                   <rect x={rx} y={bsy+4} width={roomW-6} height={bsmtH-8} rx="5" fill={rc+"25"} stroke={rc} strokeWidth="2" />
                   {isStorage && <SvgIcon n="box" x={rx+(roomW-6)/2-24} y={bsy+9} size={48} color={rc} />}
                   {isLaundry && <SvgIcon n="washer" x={rx+(roomW-6)/2-24} y={bsy+9} size={48} color={rc} />}
-                  {isMech && <SvgIcon n="pump" x={rx+(roomW-6)/2-24} y={bsy+9} size={48} color={rc} />}
+                  {isMech && <SvgIcon n="hvac" x={rx+(roomW-6)/2-24} y={bsy+9} size={48} color={rc} />}
                   {isBoiler && <SvgIcon n="boiler" x={rx+(roomW-6)/2-24} y={bsy+9} size={48} color={rc} />}
                   {isFire && <SvgIcon n="fireext" x={rx+(roomW-6)/2-24} y={bsy+9} size={48} color={rc} />}
                   <text x={rx+(roomW-6)/2} y={hasIcon ? bsy+bsmtH-13 : bsy+bsmtH/2+4} textAnchor="middle" fill={rc} fontSize="13" fontWeight="800">{room}</text>
