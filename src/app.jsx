@@ -134,6 +134,8 @@ const unitBucket = (unit) => {
 };
 
 const getUnitColor = (unit) => STATUS_COLORS[unitBucket(unit)];
+// A unit is "affected" by a trade when that trade is scheduled for it or work has started. Everything else is shaded in trade views.
+const tradeAffects = (u, trade) => { const t = u.trades?.[trade]; return !!t && (!!t.scheduled || t.status !== "Pending"); };
 
 // Trade progress is calculated from real unit statuses (not stored, not random).
 const calcProgress = (units, trade) => {
@@ -536,14 +538,15 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
               {/* LEFT side units */}
               {leftUnits.map((u, ui) => {
                 const vis = filteredIds.has(u.id);
+                const dim = !!tradeFilter && !tradeAffects(u, tradeFilter);
                 let color = tradeFilter ? (u.vacant ? STATUS_COLORS["Vacant"] : getTradeColor(u.trades[tradeFilter]?.status)) : getUnitColor(u);
                 const sel = selectedId === u.id;
                 const hasAcc = Object.values(u.trades).some(t => t.accessDenied && t.scheduled);
                 const ux = bx + floorLblW + 3 + ui * (uW + 5), uy = fy + 10;
                 return (<g key={u.id} onClick={() => onSelect(u)} style={{ cursor: "pointer" }}>
-                  <rect x={ux} y={uy} width={uW} height={uH} rx="3" fill={vis ? color : "#111827"} stroke={sel ? "#FFF" : OL} strokeWidth={sel ? "3" : "1"} opacity={vis ? 1 : 0.1} />
+                  <rect x={ux} y={uy} width={uW} height={uH} rx="3" fill={dim ? "#1b2433" : vis ? color : "#111827"} stroke={sel ? "#FFF" : OL} strokeWidth={sel ? "3" : "1"} opacity={dim ? 0.5 : vis ? 1 : 0.1} />
                   {vis && <><line x1={ux+uW/2} y1={uy} x2={ux+uW/2} y2={uy+uH} stroke={OL} strokeWidth="0.4" opacity="0.25" /><line x1={ux} y1={uy+uH/2} x2={ux+uW} y2={uy+uH/2} stroke={OL} strokeWidth="0.4" opacity="0.25" /></>}
-                  <text x={ux+uW/2} y={uy+uH/2+4} textAnchor="middle" fill={vis?(color==="#FFFFFF"||color==="#F1C40F"?"#000":"#FFF"):"#222"} fontSize="11" fontWeight="700" opacity={vis?1:0.15}>{u.unit}</text>
+                  <text x={ux+uW/2} y={uy+uH/2+4} textAnchor="middle" fill={dim ? "#7b8aa3" : vis?(color==="#FFFFFF"||color==="#F1C40F"?"#000":"#FFF"):"#222"} fontSize="11" fontWeight="700" opacity={vis?1:0.15}>{u.unit}</text>
                   {hasAcc && vis && <circle cx={ux+uW-4} cy={uy+4} r="4" fill="#ef5350" stroke={WALL} strokeWidth="1" />}
                   {vis && ticketInfo?.[u.unit.toUpperCase()] && <g><circle cx={ux+9} cy={uy+uH-9} r="8" fill={ticketInfo[u.unit.toUpperCase()].urgent ? "#ef5350" : PK} stroke="#000" strokeWidth="1.5" /><text x={ux+9} y={uy+uH-5} textAnchor="middle" fill="#000" fontSize="10" fontWeight="900">{ticketInfo[u.unit.toUpperCase()].open}</text></g>}
                 </g>);
@@ -572,14 +575,15 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
               {/* RIGHT side units */}
               {rightUnits.map((u, ui) => {
                 const vis = filteredIds.has(u.id);
+                const dim = !!tradeFilter && !tradeAffects(u, tradeFilter);
                 let color = tradeFilter ? (u.vacant ? STATUS_COLORS["Vacant"] : getTradeColor(u.trades[tradeFilter]?.status)) : getUnitColor(u);
                 const sel = selectedId === u.id;
                 const hasAcc = Object.values(u.trades).some(t => t.accessDenied && t.scheduled);
                 const ux = elevStartX + elevCenterW + 3 + ui * (uW + 5), uy = fy + 10;
                 return (<g key={u.id} onClick={() => onSelect(u)} style={{ cursor: "pointer" }}>
-                  <rect x={ux} y={uy} width={uW} height={uH} rx="3" fill={vis ? color : "#111827"} stroke={sel ? "#FFF" : OL} strokeWidth={sel ? "3" : "1"} opacity={vis ? 1 : 0.1} />
+                  <rect x={ux} y={uy} width={uW} height={uH} rx="3" fill={dim ? "#1b2433" : vis ? color : "#111827"} stroke={sel ? "#FFF" : OL} strokeWidth={sel ? "3" : "1"} opacity={dim ? 0.5 : vis ? 1 : 0.1} />
                   {vis && <><line x1={ux+uW/2} y1={uy} x2={ux+uW/2} y2={uy+uH} stroke={OL} strokeWidth="0.4" opacity="0.25" /><line x1={ux} y1={uy+uH/2} x2={ux+uW} y2={uy+uH/2} stroke={OL} strokeWidth="0.4" opacity="0.25" /></>}
-                  <text x={ux+uW/2} y={uy+uH/2+4} textAnchor="middle" fill={vis?(color==="#FFFFFF"||color==="#F1C40F"?"#000":"#FFF"):"#222"} fontSize="11" fontWeight="700" opacity={vis?1:0.15}>{u.unit}</text>
+                  <text x={ux+uW/2} y={uy+uH/2+4} textAnchor="middle" fill={dim ? "#7b8aa3" : vis?(color==="#FFFFFF"||color==="#F1C40F"?"#000":"#FFF"):"#222"} fontSize="11" fontWeight="700" opacity={vis?1:0.15}>{u.unit}</text>
                   {hasAcc && vis && <circle cx={ux+uW-4} cy={uy+4} r="4" fill="#ef5350" stroke={WALL} strokeWidth="1" />}
                   {vis && ticketInfo?.[u.unit.toUpperCase()] && <g><circle cx={ux+9} cy={uy+uH-9} r="8" fill={ticketInfo[u.unit.toUpperCase()].urgent ? "#ef5350" : PK} stroke="#000" strokeWidth="1.5" /><text x={ux+9} y={uy+uH-5} textAnchor="middle" fill="#000" fontSize="10" fontWeight="900">{ticketInfo[u.unit.toUpperCase()].open}</text></g>}
                 </g>);
@@ -2084,9 +2088,10 @@ const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddR
                   const color = tradeFilter ? (u.vacant ? STATUS_COLORS["Vacant"] : getTradeColor(u.trades[tradeFilter]?.status)) : getUnitColor(u);
                   const sel = selectedId === u.id;
                   const hasAcc = Object.values(u.trades).some(t => t.accessDenied && t.scheduled);
+                  const dim = !!tradeFilter && !tradeAffects(u, tradeFilter);
                   const tk = ticketInfo?.[u.unit.toUpperCase()];
                   return (
-                    <button key={u.id} onClick={() => onSelect(u)} style={{ position: "relative", minWidth: 110, flex: "1 1 110px", maxWidth: 190, minHeight: 60, borderRadius: 8, background: color, border: sel ? "3px solid #FFF" : `1px solid ${OL}`, color: color === "#FFFFFF" || color === "#F1C40F" ? "#000" : "#FFF", fontFamily: font, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 8px" }}>
+                    <button key={u.id} onClick={() => onSelect(u)} style={{ position: "relative", minWidth: 110, flex: "1 1 110px", maxWidth: 190, minHeight: 60, borderRadius: 8, background: dim ? "#1b2433" : color, opacity: dim ? 0.55 : 1, border: sel ? "3px solid #FFF" : `1px solid ${OL}`, color: dim ? "#7b8aa3" : (color === "#FFFFFF" || color === "#F1C40F" ? "#000" : "#FFF"), fontFamily: font, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 8px" }}>
                       {u.unit}
                       {hasAcc && <span style={{ position: "absolute", top: 5, right: 5, width: 9, height: 9, borderRadius: 5, background: "#ef5350", border: "1px solid #0b1220" }} />}
                       {tk && <span style={{ position: "absolute", left: 5, bottom: 5, minWidth: 16, height: 16, borderRadius: 8, background: tk.urgent ? "#ef5350" : PK, color: "#000", fontSize: 10, lineHeight: "16px", textAlign: "center", padding: "0 3px" }}>{tk.open}</span>}
@@ -2766,7 +2771,8 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
             </div>
 
             <div style={S.card}>
-              <div style={S.cardTitle}>{tradeFilter} Unit Map</div>
+              <div style={S.cardTitle}>{tradeFilter} {isHouse ? "House Map" : "Unit Map"}</div>
+              <div style={{ color: TXT2, fontSize: 12, marginTop: -6, marginBottom: 10 }}>Colored = {tradeFilter} is scheduled or underway there. Shaded = not affected.</div>
               <UnitMap isHouse={isHouse} onAddRoom={addRoom} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
             </div>
           </div>
