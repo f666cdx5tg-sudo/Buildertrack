@@ -3,11 +3,11 @@ import { createRoot } from "react-dom/client";
 import qrcode from "qrcode-generator";
 import { ICONS } from "./icons.js";
 
-const APP_VERSION = "3.0.0";
+const APP_VERSION = "3.0.1";
 const DEFAULT_PROJECT = "456 Grand Ave — Full Building Renovation";
 
 // ─── DATA & CONSTANTS ───────────────────────────────────────────────────────
-const TRADE_ICONS = { "Plumbing":"faucet","Carpentry":"saw","Windows":"window","Electrical":"bolt","Painting":"roller","Heating":"radiator","Cooling":"snow","Tiling":"tiles","Minor Repairs":"wrench","Major Repairs":"crane" };
+const TRADE_ICONS = { "Plumbing":"faucet","Carpentry":"saw","Windows":"window","Electrical":"bolt","Painting":"roller","Heating":"radiator","Cooling":"snow","Tiling":"tiles","Minor Repairs":"wrench","Major Repairs":"hardhat" };
 const TRADES = ["Plumbing","Carpentry","Windows","Electrical","Painting","Heating","Cooling","Tiling","Minor Repairs","Major Repairs"];
 const PHASES = ["Pending","Demolition","Rough-In","Installation","Finishing","Inspection","Complete"];
 const STATUS_COLORS = { "Pending":"#FFFFFF", "Started":"#ef5350", "In Progress":"#F1C40F", "Complete":"#66bb6a", "Vacant":"#FF8C00" };
@@ -154,7 +154,7 @@ const SvgIcon = ({ n, x, y, size = 18, color = "currentColor" }) => ICONS[n]
   ? <g className="bt-ic-g" transform={`translate(${x} ${y}) scale(${size / 24})`} fill="none" stroke={color} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{ color, pointerEvents: "none" }} dangerouslySetInnerHTML={{ __html: ICONS[n] }} />
   : null;
 // Saved projects from older versions stored emoji for common-area icons; map them to icon names.
-const LEGACY_ICON = { "\u{1F6D7}":"elevator", "\u{1F3D7}":"crane", "\u{1F527}":"wrench", "\u{1F333}":"tree", "\u{1F6BF}":"shower", "\u26A1":"bolt", "\u{1F525}":"flame", "\u2744":"snow", "\u{1F6AA}":"door", "\u{1F3E0}":"home", "\u{1F4E6}":"box", "\u{1F17F}":"parking", "\u{1F5D1}":"trash", "\u{1F4A1}":"bulb", "\u{1F528}":"hammer" };
+const LEGACY_ICON = { "\u{1F6D7}":"elevator", "\u{1F3D7}":"roof", "\u{1F527}":"wrench", "\u{1F333}":"tree", "\u{1F6BF}":"shower", "\u26A1":"bolt", "\u{1F525}":"flame", "\u2744":"snow", "\u{1F6AA}":"door", "\u{1F3E0}":"home", "\u{1F4E6}":"box", "\u{1F17F}":"parking", "\u{1F5D1}":"trash", "\u{1F4A1}":"bulb", "\u{1F528}":"hammer" };
 const areaIconKey = (ic) => ICONS[ic] ? ic : LEGACY_ICON[String(ic || "").replace(/\uFE0F/g, "")] || "building";
 const GlobalStyle = () => <style>{`
 html,body{margin:0;background:${BG1};-webkit-text-size-adjust:100%}
