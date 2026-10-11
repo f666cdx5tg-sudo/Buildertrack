@@ -1935,21 +1935,36 @@ const TicketsPanel = ({ tickets, onOpen, connected }) => {
   const open = tickets.filter(t => t.status !== "Done");
   const urgent = open.filter(t => t.priority === "Urgent").length;
   const recent = [...open].sort((a, b) => ((b.priority === "Urgent") - (a.priority === "Urgent")) || b.createdAt - a.createdAt).slice(0, 5);
-  const stat = (label, value, color) => (
-    <div style={{ textAlign: "center", minWidth: 0 }}>
-      <div style={{ fontFamily: font, fontSize: 26, fontWeight: 800, color }}>{value}</div>
-      <div style={{ fontSize: 10, color: TXT2, textTransform: "uppercase", fontFamily: font, letterSpacing: 0.5 }}>{label}</div>
-    </div>
-  );
+  const SHAPES = {
+    triangle: { pts: "24,5 44.5,41.5 3.5,41.5", ty: 36 },
+    circle: null,
+    octagon: { pts: "16,4.5 32,4.5 43.5,16 43.5,32 32,43.5 16,43.5 4.5,32 4.5,16", ty: 31 },
+    square: { rect: true, ty: 31 },
+  };
+  const stat = (label, value, color, shape) => {
+    const sh = SHAPES[shape];
+    const common = { fill: color + "22", stroke: color, strokeWidth: 2.6, strokeLinejoin: "round" };
+    return (
+      <div style={{ textAlign: "center", minWidth: 0 }}>
+        <svg viewBox="0 0 48 48" width="48" height="48" style={{ display: "block", margin: "0 auto 3px" }}>
+          {shape === "circle" && <circle cx="24" cy="24" r="19.5" {...common} />}
+          {shape === "square" && <rect x="5" y="5" width="38" height="38" rx="5" {...common} />}
+          {sh && sh.pts && <polygon points={sh.pts} {...common} />}
+          <text x="24" y={sh ? sh.ty : 31} textAnchor="middle" fill={color} fontSize="20" fontWeight="800" fontFamily={font}>{value}</text>
+        </svg>
+        <div style={{ fontSize: 10, color: TXT2, textTransform: "uppercase", fontFamily: font, letterSpacing: 0.5 }}>{label}</div>
+      </div>
+    );
+  };
   return (
     <div style={{ ...S.card, borderColor: urgent ? PK2 : BD }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
         <div style={{ ...S.cardTitle, marginBottom: 0 }}><Icon n="ticket" /> Work tickets</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, auto)", gap: 14, flexWrap: "wrap" }}>
-          {stat("New", tickets.filter(t => t.status === "New").length, TICKET_COLORS.New)}
-          {stat("Assigned", tickets.filter(t => t.status === "Assigned").length, TICKET_COLORS.Assigned)}
-          {stat("In progress", tickets.filter(t => t.status === "In Progress").length, TICKET_COLORS["In Progress"])}
-          {stat("Urgent", urgent, PK2)}
+          {stat("New", tickets.filter(t => t.status === "New").length, TICKET_COLORS.New, "triangle")}
+          {stat("Assigned", tickets.filter(t => t.status === "Assigned").length, TICKET_COLORS.Assigned, "circle")}
+          {stat("In progress", tickets.filter(t => t.status === "In Progress").length, TICKET_COLORS["In Progress"], "octagon")}
+          {stat("Urgent", urgent, PK2, "square")}
         </div>
         <button style={S.btn("primary")} onClick={onOpen}>View all <Icon n="arrowright" /></button>
       </div>

@@ -1,7 +1,7 @@
 import React from "react";
 import { ICONS } from "./icons.js";
 
-export const APP_VERSION = "3.1.16";
+export const APP_VERSION = "3.1.17";
 
 // ─── STYLES ─────────────────────────────────────────────────────────────────
 export const font = "-apple-system, 'SF Pro Text', BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
@@ -89,7 +89,7 @@ export const compressImage = (file, maxDim = 1280, quality = 0.72) => new Promis
 
 // ─── WORK TICKETS ───────────────────────────────────────────────────────────
 export const TICKET_STATUSES = ["New", "Assigned", "In Progress", "Done"];
-export const TICKET_COLORS = { "New": "#FFAA33", "Assigned": "#42a5f5", "In Progress": "#F1C40F", "Done": "#66bb6a" };
+export const TICKET_COLORS = { "New": "#4ADE80", "Assigned": "#38BDF8", "In Progress": "#FACC15", "Done": "#9e9e9e" };
 export const URGENT_RX = /\b(gas|flood\w*|burst|sewage|sewer backup|fire|smoke|spark\w*|shock\w*|carbon monoxide|no heat|no power|collaps\w*|overflow\w*|pouring)\b/i;
 export const CATEGORY_RULES = [
   ["Appliances", /\b(refrigerator|fridge|freezer|stove|oven|range|cooktop|dishwasher|washer|washing machine|dryer|microwave|appliance\w*|garbage disposal|disposal)\b/i],
