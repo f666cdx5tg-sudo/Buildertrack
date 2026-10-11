@@ -137,6 +137,6 @@ export const ICONS = {
   courtyard:'<path d="M7 14c-2.2 0-3.5-1.7-3.5-3.5S4.8 7 6.5 7C7 4.8 9 3.5 12 3.5s5 1.3 5.5 3.5c1.7 0 3 1.4 3 3.5S19.2 14 17 14z"/><path d="M12 14v7M12 17.5l2.5-2.2M8.5 21h7"/>',
   mailroom:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M3 7l9 6.5L21 7"/>',
   lobby:'<path d="M12 6V9M10 5.5h4"/><path d="M5 17a7 7 0 0114 0z"/><path d="M3 20.5h18"/>',
-  bulkhead:'<path d="M3.5 16.5h17v4h-17z"/><path d="M5.5 15l2.5-8.5h8L18.5 15z"/><path d="M12 9.5v3"/>',
+  bulkhead:'<path class="f" stroke="none" fill-rule="evenodd" d="M3 9.5L21 6.5v3.5H3z M5 10h14v10.5H5z M9.5 13.5h5v7h-5z M16 12.5h1.8v2H16z"/><path d="M1.5 20.5h21"/>',
   hvac:'<path d="M9.6 4.6A2 2 0 1111 8H2M12.6 19.4A2 2 0 1014 16H2M17.7 7.7A2.5 2.5 0 1119.5 12H2"/>'
 };
