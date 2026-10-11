@@ -302,7 +302,7 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
   const floorH = uH + 22;
   const floorLblW = 44;
   const cars = caItems("elev").filter(c => isItemEnabled("elev", c));
-  const carW = 44, carGap = 4;
+  const carW = 58, carGap = 4, carH = 54, dW = 42;
   const elevCenterW = Math.max(cars.length * (carW + carGap) + 8, 60);
   const leftCount = Math.ceil(perFloor / 2);
   const rightCount = perFloor - leftCount;
@@ -544,19 +544,19 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
               {showAreas?.elev !== false && cars.map((car, ci) => {
                 const carFloor = Math.min(elevatorFloors?.[car] || 1, maxFloor);
                 if (carFloor !== floorNum) return null;
-                const cx = elevStartX + 4 + ci * (carW + carGap), cy = fy + 8;
+                const cx = elevStartX + 4 + ci * (carW + carGap), cy = fy + 6;
                 const stuck = elevatorStuck?.[car];
                 const statusCol = getCAColor("elev", car);
                 return (<g key={`car-${car}`} onClick={() => setEditingCA(`elev-${car}`)} style={{ cursor: "pointer" }}>
                   {/* the elevator itself: car-colored doors with a center split, plus up / down arrows */}
-                  <rect x={cx} y={cy} width={30} height={uH} rx="4" fill={stuck ? "#ef5350" : elevColors[ci] || "#888"} stroke={stuck ? "#FF0" : "#FFF"} strokeWidth={stuck ? "3" : "2"} />
-                  <line x1={cx+15} y1={cy+19} x2={cx+15} y2={cy+uH-1} stroke="#FFF" strokeWidth="2" />
-                  {stuck && <><line x1={cx+4} y1={cy+4} x2={cx+26} y2={cy+uH-4} stroke="#FF0" strokeWidth="2" /><line x1={cx+26} y1={cy+4} x2={cx+4} y2={cy+uH-4} stroke="#FF0" strokeWidth="2" /></>}
-                  <rect x={cx+5} y={cy+4} width={20} height={12} rx="2" fill="#000000AA" />
-                  <text x={cx+15} y={cy+13.5} textAnchor="middle" fill="#FFF" fontSize="10" fontWeight="900">{ci+1}</text>
-                  <path d={`M${cx+33} ${cy+17} l5 -6 5 6 M${cx+33} ${cy+27} l5 6 5 -6`} fill="none" stroke="#FFF" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx={cx+29} cy={cy+3} r="5" fill={statusCol} stroke={statusCol==="#FFFFFF"?"#999":"#FFF"} strokeWidth="1" />
-                  {stuck && <text x={cx+carW/2} y={cy+uH+11} textAnchor="middle" fill="#FF0" fontSize="7" fontWeight="800">STUCK</text>}
+                  <rect x={cx} y={cy} width={dW} height={carH} rx="5" fill={stuck ? "#ef5350" : elevColors[ci] || "#888"} stroke={stuck ? "#FF0" : "#FFF"} strokeWidth={stuck ? "3" : "2.4"} />
+                  <line x1={cx+dW/2} y1={cy+24} x2={cx+dW/2} y2={cy+carH-1} stroke="#FFF" strokeWidth="2.4" />
+                  {stuck && <><line x1={cx+5} y1={cy+5} x2={cx+dW-5} y2={cy+carH-5} stroke="#FF0" strokeWidth="2.5" /><line x1={cx+dW-5} y1={cy+5} x2={cx+5} y2={cy+carH-5} stroke="#FF0" strokeWidth="2.5" /></>}
+                  <rect x={cx+6} y={cy+5} width={dW-12} height={15} rx="3" fill="#000000AA" />
+                  <text x={cx+dW/2} y={cy+17} textAnchor="middle" fill="#FFF" fontSize="13" fontWeight="900">{ci+1}</text>
+                  <path d={`M${cx+dW+3} ${cy+20} l6 -7.5 6 7.5 M${cx+dW+3} ${cy+33} l6 7.5 6 -7.5`} fill="none" stroke="#FFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx={cx+dW-3} cy={cy+3} r="6" fill={statusCol} stroke={statusCol==="#FFFFFF"?"#999":"#FFF"} strokeWidth="1.2" />
+                  {stuck && <text x={cx+dW/2} y={cy+carH+11} textAnchor="middle" fill="#FF0" fontSize="7" fontWeight="800">STUCK</text>}
                 </g>);
               })}
 
