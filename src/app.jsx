@@ -649,12 +649,13 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
             const gy = by + bodyH + lobbyH + bsmtH + 26;
             const items = caItems("grnd").filter(item => isItemEnabled("grnd", item));
             const gw = bodyW / items.length;
-            const grndColors = ["#06B6D4","#8B5CF6","#F59E0B","#EC4899","#10B981","#6366F1"];
+            const grndColors = ["#06B6D4","#EC4899","#6366F1","#F59E0B","#14B8A6","#A3E635"];
+            const gColor = (n, i) => { const l = n.toLowerCase(); return l.includes("exit") || l.includes("door") || l.includes("entrance") ? "#A78BFA" : l.includes("court") ? "#4ADE80" : l.includes("sidewalk") || l.includes("walk") ? "#FACC15" : l.includes("park") ? "#F87171" : grndColors[i % grndColors.length]; };
             const gIcon = (n) => { const l = n.toLowerCase(); return l.includes("exit") || l.includes("door") || l.includes("entrance") ? "exit" : l.includes("court") ? "courtyard" : l.includes("park") ? "parking" : l.includes("sidewalk") || l.includes("walk") ? "sidewalk" : null; };
             return items.map((item, i) => {
               const key = `grnd-${item}`;
               const statusCol = getCAColor("grnd", item);
-              const gc = grndColors[i % grndColors.length];
+              const gc = gColor(item, i);
               return (<g key={key} onClick={() => setEditingCA(key)} style={{ cursor: "pointer" }}>
                 <rect x={bx+i*gw+2} y={gy} width={gw-4} height={64} rx="6" fill={gc+"18"} stroke={gc} strokeWidth="2" />
                 {gIcon(item) && <SvgIcon n={gIcon(item)} x={bx+i*gw+gw/2-15} y={gy+5} size={30} color={gc} />}
