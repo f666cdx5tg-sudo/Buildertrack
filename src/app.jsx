@@ -19,7 +19,7 @@ const DEFAULT_COMMON_AREAS = [
   { id:"elev", label:"Elevators", icon:"elevator", items:["Car 1","Car 2","Car 3","Car 4"] },
   { id:"roof", label:"Roof", icon:"roof", items:["Main Roof","Bulkhead","Water Tower","Antenna Platform"] },
   { id:"base", label:"Basement", icon:"basement", items:["Boiler Room","Storage","Laundry","Mechanical","Fire Suppression"] },
-  { id:"grnd", label:"Grounds", icon:"tree", items:["Front Entrance","Courtyard","Parking","Sidewalk"] },
+  { id:"grnd", label:"Grounds", icon:"tree", items:["Back Door Exit","Courtyard","Parking","Sidewalk"] },
 ];
 
 const randomName = () => {
@@ -86,6 +86,10 @@ const generateUnits = (floors, perFloor, format = "alpha", demo = true) => {
 const toLocalISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 // Saved projects from before a trade existed: fill in the missing trade on every unit and in the schedule.
+// v3.1.13: "Front Entrance" became "Back Door Exit" in Grounds. Rename in saved projects too.
+const FE_OLD = "Front Entrance", FE_NEW = "Back Door Exit";
+const fixAreaList = (al) => (al || DEFAULT_COMMON_AREAS).map(a => a.id === "grnd" ? { ...a, items: a.items.map(i => i === FE_OLD ? FE_NEW : i) } : a);
+const fixAreaKeys = (o) => { if (!o || !(("grnd-" + FE_OLD) in o)) return o || {}; const n = { ...o }; n["grnd-" + FE_NEW] = n["grnd-" + FE_OLD]; delete n["grnd-" + FE_OLD]; return n; };
 const fixUnits = (units) => (units || []).map(u => {
   if (!u.trades || TRADES.every(t => u.trades[t])) return u;
   const trades = { ...u.trades };
@@ -320,7 +324,7 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
   const chipCols = Math.max(1, Math.floor((bodyW - 8 + chipGap) / (chipW + chipGap)));
   const customRows = customAreas.reduce((s, a) => s + Math.ceil(a.vis.length / chipCols), 0);
   const customH = customAreas.length ? customAreas.length * 24 + customRows * (chipH + chipGap) + 16 : 0;
-  const totalH = roofH + bodyH + lobbyH + bsmtH + 80 + customH;
+  const totalH = roofH + bodyH + lobbyH + bsmtH + 108 + customH;
   const bx = 10, by = roofH;
   const OL = "#9CA3AF";
   const WALL = "#1F2937";
@@ -646,15 +650,16 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
             const items = caItems("grnd").filter(item => isItemEnabled("grnd", item));
             const gw = bodyW / items.length;
             const grndColors = ["#06B6D4","#8B5CF6","#F59E0B","#EC4899","#10B981","#6366F1"];
-            const grndIcons = ["\ud83d\udeaa","\ud83c\udfe1","\ud83c\udd7f\ufe0f","\ud83d\udeb6"];
+            const gIcon = (n) => { const l = n.toLowerCase(); return l.includes("exit") || l.includes("door") || l.includes("entrance") ? "exit" : l.includes("court") ? "courtyard" : l.includes("park") ? "parking" : l.includes("sidewalk") || l.includes("walk") ? "sidewalk" : null; };
             return items.map((item, i) => {
               const key = `grnd-${item}`;
               const statusCol = getCAColor("grnd", item);
               const gc = grndColors[i % grndColors.length];
               return (<g key={key} onClick={() => setEditingCA(key)} style={{ cursor: "pointer" }}>
-                <rect x={bx+i*gw+2} y={gy} width={gw-4} height={36} rx="6" fill={gc+"18"} stroke={gc} strokeWidth="2" />
-                <circle cx={bx+i*gw+18} cy={gy+18} r="7" fill={statusCol} stroke={statusCol==="#FFFFFF"?"#999":gc} strokeWidth="1.5" />
-                <text x={bx+i*gw+gw/2+8} y={gy+22} textAnchor="middle" fill={gc} fontSize="11" fontWeight="800">{item}</text>
+                <rect x={bx+i*gw+2} y={gy} width={gw-4} height={64} rx="6" fill={gc+"18"} stroke={gc} strokeWidth="2" />
+                {gIcon(item) && <SvgIcon n={gIcon(item)} x={bx+i*gw+gw/2-15} y={gy+5} size={30} color={gc} />}
+                <circle cx={bx+i*gw+16} cy={gy+14} r="6" fill={statusCol} stroke={statusCol==="#FFFFFF"?"#999":gc} strokeWidth="1.5" />
+                <text x={bx+i*gw+gw/2} y={gy+55} textAnchor="middle" fill={gc} fontSize="11" fontWeight="800">{item}</text>
               </g>);
             });
           })()}
@@ -662,7 +667,7 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
           {/* ═══ CUSTOM AREAS ═══ */}
           {customAreas.length > 0 && (() => {
             const palette = ["#06B6D4","#A78BFA","#F59E0B","#EC4899","#10B981","#6366F1"];
-            let y = by + bodyH + lobbyH + bsmtH + 26 + 36 + 18;
+            let y = by + bodyH + lobbyH + bsmtH + 26 + 64 + 18;
             return customAreas.map((area, ai) => {
               const ac = palette[ai % palette.length];
               const top = y;
@@ -1969,10 +1974,10 @@ function App({ saved, savedCfg }) {
   const [demoMode, setDemoMode] = useState(saved ? saved.demoMode !== false : true);
   const [units, setUnits] = useState(() => saved?.units ? fixUnits(saved.units) : generateUnits(5, 8, "alpha", true));
   const [schedule, setSchedule] = useState(() => saved?.schedule ? fixSchedule(saved.schedule) : generateSchedule(true));
-  const [commonAreas, setCommonAreas] = useState(saved?.commonAreas || {});
-  const [areaList, setAreaList] = useState(saved?.areaList || DEFAULT_COMMON_AREAS);
+  const [commonAreas, setCommonAreas] = useState(fixAreaKeys(saved?.commonAreas));
+  const [areaList, setAreaList] = useState(fixAreaList(saved?.areaList));
   const [showAreas, setShowAreas] = useState(saved?.showAreas || { elev: true, roof: true, base: true, grnd: true });
-  const [enabledItems, setEnabledItems] = useState(saved?.enabledItems || {});
+  const [enabledItems, setEnabledItems] = useState(fixAreaKeys(saved?.enabledItems));
   const [elevatorFloors, setElevatorFloors] = useState(saved?.elevatorFloors || {});
   const [elevatorStuck, setElevatorStuck] = useState(saved?.elevatorStuck || {});
   const [events, setEvents] = useState(saved?.events || DEMO_EVENTS);
@@ -2069,9 +2074,9 @@ function App({ saved, savedCfg }) {
   const applyState = (s) => {
     setUnitFormat(s.unitFormat || "alpha"); setFloorCount(s.floorCount || 5); setPerFloor(s.perFloor || 8);
     setDemoMode(s.demoMode !== false && s.demoMode !== undefined ? true : false);
-    setUnits(fixUnits(s.units)); setSchedule(fixSchedule(s.schedule)); setCommonAreas(s.commonAreas || {});
-    setAreaList(s.areaList || DEFAULT_COMMON_AREAS); setShowAreas(s.showAreas || { elev: true, roof: true, base: true, grnd: true });
-    setEnabledItems(s.enabledItems || {}); setElevatorFloors(s.elevatorFloors || {}); setElevatorStuck(s.elevatorStuck || {});
+    setUnits(fixUnits(s.units)); setSchedule(fixSchedule(s.schedule)); setCommonAreas(fixAreaKeys(s.commonAreas));
+    setAreaList(fixAreaList(s.areaList)); setShowAreas(s.showAreas || { elev: true, roof: true, base: true, grnd: true });
+    setEnabledItems(fixAreaKeys(s.enabledItems)); setElevatorFloors(s.elevatorFloors || {}); setElevatorStuck(s.elevatorStuck || {});
     setEvents(s.events || []); setTickets(s.tickets || []); setProjectName(s.projectName || DEFAULT_PROJECT); setSelectedUnit(null);
   };
 
