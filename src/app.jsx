@@ -2299,7 +2299,10 @@ function App({ saved, savedCfg }) {
           visibility: drawer ? "visible" : "hidden", transition: `transform .22s, visibility 0s linear ${drawer ? "0s" : ".22s"}`,
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: `${SAFE_TOP} 14px 10px 16px`, borderBottom: `1px solid ${BD}`, position: "sticky", top: 0, background: BG2, zIndex: 2, flexShrink: 0 }}>
-            <div style={{ fontSize: 22, fontWeight: 800 }}>Build<span style={{ color: AG }}>Track</span> <span style={{ color: TXT2, fontSize: 12, fontWeight: 600 }}>v{APP_VERSION}</span></div>
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.1 }}>Build<span style={{ color: AG }}>Track</span> <span style={{ color: TXT2, fontSize: 12, fontWeight: 600 }}>v{APP_VERSION}</span></div>
+              <div style={{ color: TXT2, fontSize: 13, fontWeight: 600, letterSpacing: 0.3, marginTop: 2 }}>Command Center</div>
+            </div>
             <button onClick={() => setDrawer(false)} aria-label="Close menu" style={{ width: 42, height: 42, borderRadius: 12, border: `1px solid ${BD}`, background: BG3, color: TXT, cursor: "pointer", fontSize: 20, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}><Icon n="close" /></button>
           </div>
 
