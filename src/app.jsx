@@ -3,13 +3,13 @@ import { createRoot } from "react-dom/client";
 import qrcode from "qrcode-generator";
 import { ICONS } from "./icons.js";
 
-const APP_VERSION = "3.0.3";
+const APP_VERSION = "3.0.4";
 const DEFAULT_PROJECT = "456 Grand Ave — Full Building Renovation";
 
 // ─── DATA & CONSTANTS ───────────────────────────────────────────────────────
-const TRADE_ICONS = { "Plumbing":"faucet2","Carpentry":"hammer","Windows":"window","Electrical":"bolt","Painting":"roller","Heating":"flame","Cooling":"snow","Tiling":"tiles","Minor Repairs":"screwdriver","Major Repairs":"hardhat" };
-const TRADE_COLORS = { "Plumbing":"#42a5f5","Carpentry":"#d4a373","Windows":"#66bb6a","Electrical":"#FFD60A","Painting":"#bf5af2","Heating":"#ff7043","Cooling":"#80deea","Tiling":"#f06292","Minor Repairs":"#b0bec5","Major Repairs":"#ef5350" };
-const TRADES = ["Plumbing","Carpentry","Windows","Electrical","Painting","Heating","Cooling","Tiling","Minor Repairs","Major Repairs"];
+const TRADE_ICONS = { "Plumbing":"faucet2","Carpentry":"hammer","Windows":"window","Electrical":"plug","Painting":"roller","Heating":"flame","Cooling":"snow","Tiling":"tiles","Appliances":"washer","Minor Repairs":"toolbox","Major Repairs":"hardhat" };
+const TRADE_COLORS = { "Plumbing":"#42a5f5","Carpentry":"#d4a373","Windows":"#66bb6a","Electrical":"#FFD60A","Painting":"#bf5af2","Heating":"#ff7043","Cooling":"#80deea","Tiling":"#f06292","Appliances":"#26a69a","Minor Repairs":"#b0bec5","Major Repairs":"#ef5350" };
+const TRADES = ["Plumbing","Carpentry","Windows","Electrical","Painting","Heating","Cooling","Tiling","Appliances","Minor Repairs","Major Repairs"];
 const PHASES = ["Pending","Demolition","Rough-In","Installation","Finishing","Inspection","Complete"];
 const STATUS_COLORS = { "Pending":"#FFFFFF", "Started":"#ef5350", "In Progress":"#F1C40F", "Complete":"#66bb6a", "Vacant":"#FF8C00" };
 const DEFAULT_COMMON_AREAS = [
@@ -81,6 +81,19 @@ const generateUnits = (floors, perFloor, format = "alpha", demo = true) => {
 };
 
 const toLocalISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+// Saved projects from before a trade existed: fill in the missing trade on every unit and in the schedule.
+const fixUnits = (units) => (units || []).map(u => {
+  if (!u.trades || TRADES.every(t => u.trades[t])) return u;
+  const trades = { ...u.trades };
+  TRADES.forEach(t => { if (!trades[t]) trades[t] = { status: "Pending", phase: "Pending", contractor: "", scheduled: false, accessDenied: false }; });
+  return { ...u, trades };
+});
+const fixSchedule = (sc) => {
+  const out = { ...(sc || {}) }; const d = toLocalISO(new Date());
+  TRADES.forEach(t => { if (!out[t]) out[t] = { start: d, end: d }; });
+  return out;
+};
 
 const generateSchedule = (demo = true) => {
   const schedule = {};
@@ -1747,6 +1760,7 @@ const TICKET_STATUSES = ["New", "Assigned", "In Progress", "Done"];
 const TICKET_COLORS = { "New": "#FFAA33", "Assigned": "#42a5f5", "In Progress": "#F1C40F", "Done": "#66bb6a" };
 const URGENT_RX = /\b(gas|flood\w*|burst|sewage|sewer backup|fire|smoke|spark\w*|shock\w*|carbon monoxide|no heat|no power|collaps\w*|overflow\w*|pouring)\b/i;
 const CATEGORY_RULES = [
+  ["Appliances", /\b(refrigerator|fridge|freezer|stove|oven|range|cooktop|dishwasher|washer|washing machine|dryer|microwave|appliance\w*|garbage disposal|disposal)\b/i],
   ["Electrical", /\b(outlet|electric\w*|power|breaker|fuse|wiring|switch|light\w*|bulb|spark\w*|buzz\w*|socket)\b/i],
   ["Heating", /\b(heat|heater|heating|radiator|boiler|steam|thermostat)\b/i],
   ["Cooling", /\b(a\/c|ac|air ?con\w*|cooling|too hot|fan)\b/i],
@@ -2190,8 +2204,8 @@ function App({ saved, savedCfg }) {
   const [floorCount, setFloorCount] = useState(saved?.floorCount || 5);
   const [perFloor, setPerFloor] = useState(saved?.perFloor || 8);
   const [demoMode, setDemoMode] = useState(saved ? saved.demoMode !== false : true);
-  const [units, setUnits] = useState(() => saved?.units || generateUnits(5, 8, "alpha", true));
-  const [schedule, setSchedule] = useState(() => saved?.schedule || generateSchedule(true));
+  const [units, setUnits] = useState(() => saved?.units ? fixUnits(saved.units) : generateUnits(5, 8, "alpha", true));
+  const [schedule, setSchedule] = useState(() => saved?.schedule ? fixSchedule(saved.schedule) : generateSchedule(true));
   const [commonAreas, setCommonAreas] = useState(saved?.commonAreas || {});
   const [areaList, setAreaList] = useState(saved?.areaList || DEFAULT_COMMON_AREAS);
   const [showAreas, setShowAreas] = useState(saved?.showAreas || { elev: true, roof: true, base: true, grnd: true });
@@ -2292,7 +2306,7 @@ function App({ saved, savedCfg }) {
   const applyState = (s) => {
     setUnitFormat(s.unitFormat || "alpha"); setFloorCount(s.floorCount || 5); setPerFloor(s.perFloor || 8);
     setDemoMode(s.demoMode !== false && s.demoMode !== undefined ? true : false);
-    setUnits(s.units); setSchedule(s.schedule); setCommonAreas(s.commonAreas || {});
+    setUnits(fixUnits(s.units)); setSchedule(fixSchedule(s.schedule)); setCommonAreas(s.commonAreas || {});
     setAreaList(s.areaList || DEFAULT_COMMON_AREAS); setShowAreas(s.showAreas || { elev: true, roof: true, base: true, grnd: true });
     setEnabledItems(s.enabledItems || {}); setElevatorFloors(s.elevatorFloors || {}); setElevatorStuck(s.elevatorStuck || {});
     setEvents(s.events || []); setTickets(s.tickets || []); setProjectName(s.projectName || DEFAULT_PROJECT); setSelectedUnit(null);

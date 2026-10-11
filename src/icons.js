@@ -123,5 +123,7 @@ export const ICONS = {
   stopsq:'<rect x="6" y="6" width="12" height="12" rx="2"/>',
   tools:'<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>',
   faucet2:'<path d="M9 3.5h6M12 3.5V7"/><path d="M4 11V9a2 2 0 012-2h9a4 4 0 014 4v2.5"/><path d="M16.5 13.5h6M19.5 17v2.5"/>',
-  screwdriver:'<path d="M13.5 10.5l7-7"/><path d="M9.5 9.5l5 5-3 3a2.1 2.1 0 01-3 0L5.5 15.2a2.1 2.1 0 010-3z"/><path d="M8 16l-4.5 4.5"/>'
+  screwdriver:'<path d="M13.5 10.5l7-7"/><path d="M9.5 9.5l5 5-3 3a2.1 2.1 0 01-3 0L5.5 15.2a2.1 2.1 0 010-3z"/><path d="M8 16l-4.5 4.5"/>',
+  toolbox:'<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M8.5 9V6.5A1.5 1.5 0 0110 5h4a1.5 1.5 0 011.5 1.5V9M3 14h18M10.5 12.5h3v3h-3z"/>',
+  washer:'<rect x="4.5" y="3" width="15" height="18" rx="2"/><circle cx="12" cy="13.5" r="4.2"/><path d="M4.5 7.5h15M7.5 5.2h.5M10.5 5.2h.5"/>'
 };

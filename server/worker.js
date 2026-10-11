@@ -13,7 +13,7 @@ const json = (obj, status = 200) =>
 
 const STATUSES = ["New", "Assigned", "In Progress", "Done"];
 const PRIORITIES = ["Normal", "Urgent"];
-const CATEGORIES = ["Plumbing", "Carpentry", "Windows", "Electrical", "Painting", "Heating", "Cooling", "Tiling", "Minor Repairs", "Major Repairs"];
+const CATEGORIES = ["Plumbing", "Carpentry", "Windows", "Electrical", "Painting", "Heating", "Cooling", "Tiling", "Appliances", "Minor Repairs", "Major Repairs"];
 const RATE_LIMIT_PER_HOUR = 8;
 
 const idOut = (n) => "T-" + (1000 + n);
