@@ -1738,6 +1738,8 @@ const BulkNotices = ({ units, setUnits, projectName }) => {
 
 const WMO = (c) => c === 0 ? ["Clear", "sun"] : c <= 2 ? ["Partly Cloudy", "suncloud"] : c === 3 ? ["Overcast", "cloud"] : c <= 48 ? ["Fog", "fog"] : c <= 57 ? ["Drizzle", "suncloudrain"] : c <= 67 ? ["Rain", "rain"] : c <= 77 ? ["Snow", "snowcloud"] : c <= 82 ? ["Showers", "rain"] : c <= 86 ? ["Snow Showers", "snowcloud"] : ["Thunderstorm", "storm"];
 
+const WX_COLORS = { sun: "#FACC15", suncloud: "#FDE68A", cloud: "#94A3B8", fog: "#94A3B8", rain: "#60A5FA", suncloudrain: "#60A5FA", snowcloud: "#BAE6FD", storm: "#FBBF24" };
+
 // Own component so the clock ticking never re-renders the building map.
 function HeaderRight() {
   const [now, setNow] = useState(new Date());
@@ -1745,22 +1747,30 @@ function HeaderRight() {
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 10000); return () => clearInterval(t); }, []);
   useEffect(() => {
     let alive = true;
-    const load = () => fetch("https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.0060&current=temperature_2m,weather_code&temperature_unit=fahrenheit&timezone=America%2FNew_York")
+    const load = () => fetch("https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.0060&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=4&temperature_unit=fahrenheit&timezone=America%2FNew_York")
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(j => { if (alive && j.current) setWeather({ temp: j.current.temperature_2m, code: j.current.weather_code }); })
+      .then(j => { if (alive && j.current) setWeather({ temp: j.current.temperature_2m, code: j.current.weather_code, days: (j.daily?.time || []).map((d, i) => ({ date: d, code: j.daily.weather_code[i], hi: j.daily.temperature_2m_max[i], lo: j.daily.temperature_2m_min[i] })) }); })
       .catch(() => { if (alive) setWeather(false); });
     load();
     const t = setInterval(load, 15 * 60 * 1000);
     return () => { alive = false; clearInterval(t); };
   }, []);
   const [cond, icon] = weather ? WMO(weather.code) : ["", "suncloud"];
+  const forecast = weather?.days?.slice(1, 4) || []; // next three days
+  const dayName = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("en-US", { weekday: "short" });
   return (
     <div style={{ textAlign: "right", flexShrink: 0, lineHeight: 1.3 }}>
       <div style={{ color: AG, fontWeight: 800, fontSize: 16 }}>{now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</div>
-      <div style={{ color: TXT2, fontSize: 12, display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end" }}>
-        <span className="bt-wide">{now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}</span>
-        {weather ? <span title={cond} style={{ display: "inline-flex", alignItems: "center", gap: 4, color: TXT }}><Icon n={icon} /> {Math.round(weather.temp)}°F</span>
-          : <span className="bt-wide">{weather === null ? "…" : "No weather"}</span>}
+      <div style={{ color: TXT2, fontSize: 11 }}>{now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</div>
+      <div style={{ color: TXT2, fontSize: 11, display: "flex", alignItems: "center", gap: 8, justifyContent: "flex-end", marginTop: 2 }}>
+        {weather ? (<>
+          <span title={cond} style={{ display: "inline-flex", alignItems: "center", gap: 4, color: TXT, fontWeight: 700 }}><span style={{ color: WX_COLORS[icon] || TXT, display: "inline-flex" }}><Icon n={icon} /></span>{Math.round(weather.temp)}°</span>
+          {forecast.map(d => { const [c, ic] = WMO(d.code); return (
+            <span key={d.date} title={`${dayName(d.date)}: ${c}, high ${Math.round(d.hi)}° / low ${Math.round(d.lo)}°`} style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1.1 }}>
+              <span style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: 0.4 }}>{dayName(d.date)}</span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 2, color: TXT }}><span style={{ color: WX_COLORS[ic] || TXT, display: "inline-flex" }}><Icon n={ic} /></span>{Math.round(d.hi)}°</span>
+            </span>); })}
+        </>) : <span>{weather === null ? "…" : "No weather"}</span>}
       </div>
     </div>
   );
