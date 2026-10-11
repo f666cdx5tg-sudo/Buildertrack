@@ -2598,4 +2598,18 @@ function Root() {
   return <App saved={state.saved} savedCfg={state.cfg} />;
 }
 
-createRoot(document.getElementById("root")).render(<Root />);
+// Command Center is a desktop tool: phones (iPhone / Android phone) get a notice instead of the app.
+const IS_PHONE = /iPhone|iPod|Android.+Mobile|Windows Phone/i.test(navigator.userAgent);
+const DesktopOnly = () => (
+  <div style={{ minHeight: "100vh", background: BG1, color: TXT, fontFamily: fontSans, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, boxSizing: "border-box" }}>
+    <GlobalStyle />
+    <div style={{ maxWidth: 360, textAlign: "center" }}>
+      <div style={{ width: 64, height: 64, borderRadius: 18, background: AG + "26", color: AG, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 30, marginBottom: 18 }}><Icon n="building" /></div>
+      <div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1.15 }}>Command Center</div>
+      <div style={{ color: TXT2, fontSize: 15, marginTop: 10, lineHeight: 1.5 }}>This app is built for a desktop or laptop screen. Open it on your computer.</div>
+      <div style={{ color: TXT2, fontSize: 12, marginTop: 18 }}>v{APP_VERSION}</div>
+    </div>
+  </div>
+);
+
+createRoot(document.getElementById("root")).render(IS_PHONE ? <DesktopOnly /> : <Root />);
