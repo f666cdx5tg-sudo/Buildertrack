@@ -3,11 +3,11 @@ import { createRoot } from "react-dom/client";
 import qrcode from "qrcode-generator";
 import { ICONS } from "./icons.js";
 
-const APP_VERSION = "3.0.1";
+const APP_VERSION = "3.0.2";
 const DEFAULT_PROJECT = "456 Grand Ave — Full Building Renovation";
 
 // ─── DATA & CONSTANTS ───────────────────────────────────────────────────────
-const TRADE_ICONS = { "Plumbing":"faucet","Carpentry":"saw","Windows":"window","Electrical":"bolt","Painting":"roller","Heating":"radiator","Cooling":"snow","Tiling":"tiles","Minor Repairs":"wrench","Major Repairs":"hardhat" };
+const TRADE_ICONS = { "Plumbing":"faucet2","Carpentry":"hammer","Windows":"window","Electrical":"bolt","Painting":"roller","Heating":"flame","Cooling":"snow","Tiling":"tiles","Minor Repairs":"screwdriver","Major Repairs":"hardhat" };
 const TRADES = ["Plumbing","Carpentry","Windows","Electrical","Painting","Heating","Cooling","Tiling","Minor Repairs","Major Repairs"];
 const PHASES = ["Pending","Demolition","Rough-In","Installation","Finishing","Inspection","Complete"];
 const STATUS_COLORS = { "Pending":"#FFFFFF", "Started":"#ef5350", "In Progress":"#F1C40F", "Complete":"#66bb6a", "Vacant":"#FF8C00" };
