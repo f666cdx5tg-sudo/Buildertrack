@@ -636,11 +636,11 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
                 const hasIcon = isStorage || isLaundry || isMech || isFire || isBoiler;
                 return (<g key={key} onClick={() => setEditingCA(key)} style={{ cursor: "pointer" }}>
                   <rect x={rx} y={bsy+4} width={roomW-6} height={bsmtH-8} rx="5" fill={rc+"25"} stroke={rc} strokeWidth="2" />
-                  {isStorage && <SvgIcon n="box" x={rx+(roomW-6)/2-24} y={bsy+9} size={48} color={rc} />}
-                  {isLaundry && <SvgIcon n="washer" x={rx+(roomW-6)/2-24} y={bsy+9} size={48} color={rc} />}
-                  {isMech && <SvgIcon n="hvac" x={rx+(roomW-6)/2-24} y={bsy+9} size={48} color={rc} />}
-                  {isBoiler && <SvgIcon n="boiler" x={rx+(roomW-6)/2-24} y={bsy+9} size={48} color={rc} />}
-                  {isFire && <SvgIcon n="fireext" x={rx+(roomW-6)/2-24} y={bsy+9} size={48} color={rc} />}
+                  {isStorage && <SvgIcon n="box" x={rx+(roomW-6)/2-24} y={bsy+14} size={48} color={rc} />}
+                  {isLaundry && <SvgIcon n="washer" x={rx+(roomW-6)/2-24} y={bsy+14} size={48} color={rc} />}
+                  {isMech && <SvgIcon n="hvac" x={rx+(roomW-6)/2-24} y={bsy+14} size={48} color={rc} />}
+                  {isBoiler && <SvgIcon n="boiler" x={rx+(roomW-6)/2-24} y={bsy+14} size={48} color={rc} />}
+                  {isFire && <SvgIcon n="fireext" x={rx+(roomW-6)/2-24} y={bsy+14} size={48} color={rc} />}
                   <text x={rx+(roomW-6)/2} y={hasIcon ? bsy+bsmtH-13 : bsy+bsmtH/2+4} textAnchor="middle" fill={rc} fontSize="13" fontWeight="800">{room}</text>
                   <circle cx={rx+roomW-14} cy={bsy+12} r="6" fill={statusCol} stroke={statusCol==="#FFFFFF"?"#999":rc} strokeWidth="1.5" />
                 </g>);
@@ -663,7 +663,7 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
               const gc = gColor(item, i);
               return (<g key={key} onClick={() => setEditingCA(key)} style={{ cursor: "pointer" }}>
                 <rect x={bx+i*gw+2} y={gy} width={gw-4} height={64} rx="6" fill={gc+"18"} stroke={gc} strokeWidth="2" />
-                {gIcon(item) && <SvgIcon n={gIcon(item)} x={bx+i*gw+gw/2-15} y={gy+5} size={30} color={gc} />}
+                {gIcon(item) && <SvgIcon n={gIcon(item)} x={bx+i*gw+gw/2-15} y={gy+8} size={30} color={gc} />}
                 <circle cx={bx+i*gw+16} cy={gy+14} r="6" fill={statusCol} stroke={statusCol==="#FFFFFF"?"#999":gc} strokeWidth="1.5" />
                 <text x={bx+i*gw+gw/2} y={gy+55} textAnchor="middle" fill={gc} fontSize="11" fontWeight="800">{item}</text>
               </g>);
