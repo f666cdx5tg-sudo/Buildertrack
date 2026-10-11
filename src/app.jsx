@@ -183,6 +183,15 @@ const idb = {
       q.onerror = () => rej(q.error);
     });
   },
+  async del(k) {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const t = db.transaction("kv", "readwrite");
+      t.objectStore("kv").delete(k);
+      t.oncomplete = () => res();
+      t.onerror = () => rej(t.error);
+    });
+  },
   async set(k, v) {
     const db = await this.open();
     return new Promise((res, rej) => {
@@ -2037,8 +2046,117 @@ const TicketsPanel = ({ tickets, onOpen, connected }) => {
   );
 };
 
+// ─── PROPERTIES (portfolio) ─────────────────────────────────────────────────
+const summarize = (st) => {
+  if (!st || !st.units) return { demo: true, units: 40, inProgress: 0, complete: 0, access: 0, openTickets: 0, pct: 0 };
+  const units = fixUnits(st.units);
+  return {
+    demo: st.demoMode !== false,
+    units: units.length,
+    inProgress: units.filter(u => unitBucket(u) === "In Progress").length,
+    complete: units.filter(u => unitBucket(u) === "Complete").length,
+    access: units.filter(u => Object.values(u.trades).some(t => t.accessDenied && t.scheduled)).length,
+    openTickets: (st.tickets || []).filter(t => t.status !== "Done").length,
+    pct: Math.round(TRADES.reduce((a, t) => a + calcProgress(units, t), 0) / TRADES.length),
+  };
+};
+
+const PropertiesView = ({ list, activeId, live, summaries, onOpen, onAdd, onDelete, onEdit }) => {
+  const [adding, setAdding] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [f, setF] = useState({ name: "", address: "", floors: 5, perFloor: 8, format: "alpha" });
+  const [e, setE] = useState({ name: "", address: "" });
+  const create = () => { if (!f.name.trim()) return; onAdd({ ...f, name: f.name.trim(), address: f.address.trim() }); setAdding(false); setF({ name: "", address: "", floors: 5, perFloor: 8, format: "alpha" }); };
+  const stat = (label, value, color) => (
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ fontFamily: font, fontSize: 20, fontWeight: 600, lineHeight: 1.1, color: color || TXT }}>{value}</div>
+      <div style={{ fontSize: 10, color: TXT2, textTransform: "uppercase", letterSpacing: 0.5, whiteSpace: "nowrap" }}>{label}</div>
+    </div>
+  );
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+        <div>
+          <div style={{ fontFamily: font, fontSize: 13, fontWeight: 700, color: PK, textTransform: "uppercase", letterSpacing: "0.07em" }}>Properties</div>
+          <div style={{ color: TXT2, fontSize: 13, marginTop: 2 }}>{list.length} {list.length === 1 ? "property" : "properties"} · pick one to work on it</div>
+        </div>
+        <button style={S.btn("primary")} onClick={() => setAdding(a => !a)}><Icon n="plus" /> Add property</button>
+      </div>
+
+      {adding && (
+        <div style={{ ...S.card, border: `1px solid ${AG}66` }}>
+          <div style={S.cardTitle}>New property</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+            <div><label style={S.label}>Name</label><input style={S.input} autoFocus value={f.name} onChange={ev => setF({ ...f, name: ev.target.value })} placeholder="e.g. 220 Mercer St" /></div>
+            <div><label style={S.label}>Address</label><input style={S.input} value={f.address} onChange={ev => setF({ ...f, address: ev.target.value })} placeholder="Street, city" /></div>
+            <div><label style={S.label}>Floors</label><input style={S.input} type="number" min="1" max="60" value={f.floors} onChange={ev => setF({ ...f, floors: Math.max(1, Math.min(60, +ev.target.value || 1)) })} /></div>
+            <div><label style={S.label}>Units per floor</label><input style={S.input} type="number" min="1" max="26" value={f.perFloor} onChange={ev => setF({ ...f, perFloor: Math.max(1, Math.min(26, +ev.target.value || 1)) })} /></div>
+            <div><label style={S.label}>Unit numbering</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button style={{ ...S.btn(f.format === "alpha" ? "primary" : undefined), flex: 1 }} onClick={() => setF({ ...f, format: "alpha" })}>Alpha (1A)</button>
+                <button style={{ ...S.btn(f.format === "numeric" ? "primary" : undefined), flex: 1 }} onClick={() => setF({ ...f, format: "numeric" })}>Numeric (101)</button>
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+            <button style={S.btn("primary")} onClick={create} disabled={!f.name.trim()}>Create property</button>
+            <button style={S.btn()} onClick={() => setAdding(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
+        {list.map(p => {
+          const isActive = p.id === activeId;
+          const sm = isActive ? live : (summaries[p.id] || summarize(null));
+          const name = isActive ? live.name : p.name;
+          return (
+            <div key={p.id} style={{ ...S.card, marginBottom: 0, border: `1px solid ${isActive ? AG + "88" : BD}`, display: "flex", flexDirection: "column", gap: 12 }}>
+              {editId === p.id ? (
+                <div style={{ display: "grid", gap: 8 }}>
+                  <input style={S.input} value={e.name} onChange={ev => setE({ ...e, name: ev.target.value })} placeholder="Name" />
+                  <input style={S.input} value={e.address} onChange={ev => setE({ ...e, address: ev.target.value })} placeholder="Address" />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button style={S.btn("primary")} onClick={() => { onEdit(p.id, { name: e.name.trim() || name, address: e.address.trim() }); setEditId(null); }}>Save</button>
+                    <button style={S.btn()} onClick={() => setEditId(null)}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis" }}>{name}</div>
+                    <div style={{ color: TXT2, fontSize: 13, marginTop: 2 }}>{p.address || "No address"}</div>
+                  </div>
+                  {isActive && <span style={S.tag(AG)}>OPEN NOW</span>}
+                  {sm.demo && <span style={S.tag(PK)}>DEMO</span>}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 10 }}>
+                {stat("Units", sm.units)}
+                {stat("In progress", sm.inProgress, "#F1C40F")}
+                {stat("Complete", sm.complete, "#66bb6a")}
+                {stat("Tickets", sm.openTickets, sm.openTickets ? PK : TXT)}
+                {stat("Access", sm.access, sm.access ? "#ef5350" : TXT)}
+              </div>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: TXT2, marginBottom: 4 }}><span>Overall progress</span><span>{sm.pct}%</span></div>
+                <div style={{ height: 5, borderRadius: 3, background: BD, overflow: "hidden" }}><div style={{ height: "100%", width: `${sm.pct}%`, background: sm.pct === 100 ? AG2 : AG, borderRadius: 3 }} /></div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button style={{ ...S.btn("primary"), flex: 1 }} onClick={() => onOpen(p.id)}>{isActive ? "Open dashboard" : "Open"}</button>
+                <button style={S.btn()} onClick={() => { setEditId(p.id); setE({ name, address: p.address || "" }); }} aria-label="Edit property"><Icon n="pencil" /></button>
+                {list.length > 1 && <button style={S.btn()} onClick={() => onDelete(p.id, name)} aria-label="Delete property"><Icon n="trash" /></button>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 // ─── MAIN APP ───────────────────────────────────────────────────────────────
-function App({ saved, savedCfg }) {
+function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwitch, onAddProp, onDeleteProp, onEditProp }) {
   const [unitFormat, setUnitFormat] = useState(saved?.unitFormat || "alpha");
   const [floorCount, setFloorCount] = useState(saved?.floorCount || 5);
   const [perFloor, setPerFloor] = useState(saved?.perFloor || 8);
@@ -2072,7 +2190,7 @@ function App({ saved, savedCfg }) {
   const isElevStuck = (car) => elevatorStuck[car] || false;
   const setElevFloor = (car, floor) => setElevatorFloors(prev => ({ ...prev, [car]: floor }));
   const toggleElevStuck = (car) => setElevatorStuck(prev => ({ ...prev, [car]: !prev[car] }));
-  const [page, setPage] = useState("dashboard");
+  const [page, setPage] = useState(startPage || "dashboard");
   const [selectedId, setSelectedId] = useState(null);
   const selectedUnit = units.find(u => u.id === selectedId) || null;
   const setSelectedUnit = (u) => setSelectedId(u ? u.id : null);
@@ -2089,10 +2207,21 @@ function App({ saved, savedCfg }) {
 
   const snapshot = () => ({ units, schedule, commonAreas, areaList, showAreas, enabledItems, elevatorFloors, elevatorStuck, projectName, unitFormat, floorCount, perFloor, events, demoMode, tickets });
 
+  const flushSave = () => idb.set("state:" + activeId, { ...snapshot(), savedAt: Date.now() }).catch(() => {});
+  const openProperty = async (id) => { await flushSave(); await onSwitch(id, id === activeId ? "dashboard" : "dashboard"); };
+  const addProperty = async (form) => { await flushSave(); await onAddProp(form); };
+  const deleteProperty = async (id, name) => {
+    if (!confirm(`Delete "${name}" and all of its units, tickets, notes and photos? This cannot be undone. Export a backup first if you need it.`)) return;
+    if (id !== activeId) await flushSave();
+    await onDeleteProp(id);
+  };
+  const liveSummary = { ...summarize({ units, tickets, demoMode }), name: projectName };
+  useEffect(() => { onEditProp(activeId, { name: projectName }); }, [projectName]);
+
   // Auto-save (debounced) so a refresh never wipes the project.
   useEffect(() => {
     const t = setTimeout(() => {
-      idb.set("state", { ...snapshot(), savedAt: Date.now() })
+      idb.set("state:" + activeId, { ...snapshot(), savedAt: Date.now() })
         .then(() => setSaveStatus("Saved " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })))
         .catch(() => setSaveStatus("Not saved (storage blocked)"));
     }, 1200);
@@ -2181,7 +2310,7 @@ function App({ saved, savedCfg }) {
 
   const saveTicketCfg = (c) => {
     setTicketCfg(c);
-    idb.set("ticketApi", c).catch(() => {});
+    idb.set("ticketApi:" + activeId, c).catch(() => {});
     if (!c.url) setSyncState({ status: "off", at: 0, err: "" });
   };
 
@@ -2242,6 +2371,7 @@ function App({ saved, savedCfg }) {
   useEffect(() => { document.title = (newTicketCount ? `(${newTicketCount}) ` : "") + "Command Center"; }, [newTicketCount]);
 
   const mainPages = [
+    { id: "properties", label: "Properties", icon: "pin" },
     { id: "dashboard", label: "Dashboard", icon: "home" },
     { id: "tickets", label: "Tickets", icon: "ticket", badge: newTicketCount },
     { id: "schedule", label: "Schedule", icon: "calendar" },
@@ -2480,6 +2610,9 @@ function App({ saved, savedCfg }) {
           </div>
         )}
 
+        {/* Properties */}
+        {page === "properties" && <PropertiesView list={propList} activeId={activeId} live={liveSummary} summaries={summaries} onOpen={async (id) => { if (id === activeId) setPage("dashboard"); else await openProperty(id); }} onAdd={addProperty} onDelete={deleteProperty} onEdit={(id, patch) => { if (id === activeId && patch.name) setProjectName(patch.name); onEditProp(id, patch); }} />}
+
         {/* Dashboard */}
         {page === "dashboard" && (
           <div>
@@ -2571,7 +2704,20 @@ function App({ saved, savedCfg }) {
 }
 
 function Root() {
-  const [state, setState] = useState({ loaded: false, saved: null, cfg: null });
+  const [boot, setBoot] = useState(null);       // { activeId, saved, cfg, summaries, startPage, nonce }
+  const [propList, setPropList] = useState([]);
+  const nonce = useRef(0);
+
+  const loadAll = async (list, activeId, startPage) => {
+    const entries = await Promise.all(list.map(async p => [p.id, await idb.get("state:" + p.id).catch(() => null)]));
+    const summaries = {};
+    entries.forEach(([id, st]) => { summaries[id] = summarize(st); });
+    const saved = (entries.find(([id]) => id === activeId) || [])[1] || null;
+    const cfg = await idb.get("ticketApi:" + activeId).catch(() => null);
+    setPropList(list);
+    setBoot({ activeId, saved, cfg: cfg || null, summaries, startPage, nonce: ++nonce.current });
+  };
+
   useEffect(() => {
     if ("serviceWorker" in navigator && /^https?:/.test(window.location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {});
   }, []);
@@ -2583,12 +2729,59 @@ function Root() {
   useEffect(() => {
     let alive = true;
     try { navigator.storage?.persist?.(); } catch (e) {}
-    Promise.all([idb.get("state").catch(() => null), idb.get("ticketApi").catch(() => null)])
-      .then(([s, cfg]) => { if (alive) setState({ loaded: true, saved: s || null, cfg: cfg || null }); });
+    (async () => {
+      let list = await idb.get("props").catch(() => null);
+      if (!list || !list.length) {
+        // First run with properties: the existing single project becomes property #1.
+        const old = await idb.get("state").catch(() => null);
+        const oldCfg = await idb.get("ticketApi").catch(() => null);
+        list = [{ id: "p1", name: old?.projectName || DEFAULT_PROJECT, address: "", addedAt: Date.now() }];
+        if (old) await idb.set("state:p1", old).catch(() => {});
+        if (oldCfg) await idb.set("ticketApi:p1", oldCfg).catch(() => {});
+        await idb.set("props", list).catch(() => {});
+        await idb.set("activeProp", "p1").catch(() => {});
+      }
+      let activeId = await idb.get("activeProp").catch(() => null);
+      if (!list.some(p => p.id === activeId)) activeId = list[0].id;
+      if (alive) await loadAll(list, activeId, "properties");
+    })();
     return () => { alive = false; };
   }, []);
-  if (!state.loaded) return <div style={{ color: TXT2, fontFamily: font, padding: 40 }}>Loading Command Center…</div>;
-  return <App saved={state.saved} savedCfg={state.cfg} />;
+
+  const switchTo = async (id, page) => { await idb.set("activeProp", id).catch(() => {}); await loadAll(propList, id, page || "dashboard"); };
+  const addProp = async (form) => {
+    const id = "p" + Date.now().toString(36);
+    const st = {
+      units: generateUnits(form.floors, form.perFloor, form.format, false), schedule: generateSchedule(false),
+      commonAreas: {}, events: [], elevatorFloors: {}, elevatorStuck: {}, tickets: [], demoMode: false,
+      projectName: form.name, unitFormat: form.format, floorCount: form.floors, perFloor: form.perFloor, savedAt: Date.now(),
+    };
+    const list = [...propList, { id, name: form.name, address: form.address, addedAt: Date.now() }];
+    await idb.set("state:" + id, st); await idb.set("props", list); await idb.set("activeProp", id);
+    await loadAll(list, id, "dashboard");
+  };
+  const deleteProp = async (id) => {
+    const list = propList.filter(p => p.id !== id);
+    if (!list.length) return;
+    await idb.del("state:" + id).catch(() => {}); await idb.del("ticketApi:" + id).catch(() => {});
+    await idb.set("props", list);
+    const active = boot.activeId === id ? list[0].id : boot.activeId;
+    if (active !== boot.activeId) await idb.set("activeProp", active);
+    await loadAll(list, active, "properties");
+  };
+  const editProp = (id, patch) => {
+    setPropList(prev => {
+      if (!prev.some(p => p.id === id)) return prev;
+      const next = prev.map(p => p.id === id ? { ...p, ...patch } : p);
+      if (next.some((p, i) => p.name !== prev[i].name || p.address !== prev[i].address)) idb.set("props", next).catch(() => {});
+      else return prev;
+      return next;
+    });
+  };
+
+  if (!boot) return <div style={{ color: TXT2, fontFamily: font, padding: 40 }}>Loading Command Center…</div>;
+  return <App key={boot.activeId + ":" + boot.nonce} saved={boot.saved} savedCfg={boot.cfg} activeId={boot.activeId} propList={propList} summaries={boot.summaries}
+    startPage={boot.startPage} onSwitch={switchTo} onAddProp={addProp} onDeleteProp={deleteProp} onEditProp={editProp} />;
 }
 
 // Command Center is a desktop tool: phones (iPhone / Android phone) get a notice instead of the app.
