@@ -585,14 +585,14 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
             return (<g>
               <rect x={bx} y={ly} width={bodyW} height={lobbyH} fill="#4ADE800A" stroke={OL} strokeWidth="2.5" />
               {/* Door centered under elevators */}
-              <rect x={doorX} y={ly+6} width={doorW} height={lobbyH-8} rx="3" fill="#D1FAE512" stroke={OL} strokeWidth="1.5" />
-              <line x1={doorX+doorW/2} y1={ly+6} x2={doorX+doorW/2} y2={ly+lobbyH-2} stroke={OL} strokeWidth="1.5" />
-              {[0.1,0.28,0.58,0.76].map((p,i) => <rect key={i} x={doorX+doorW*p} y={ly+10} width={doorW*0.12} height={lobbyH-18} rx="1" fill="#D1FAE508" stroke={OL} strokeWidth="0.5" opacity="0.4" />)}
+              <rect x={doorX} y={ly+6} width={doorW} height={lobbyH-8} rx="3" fill="#C8963E26" stroke="#C8963E" strokeWidth="2" />
+              <line x1={doorX+doorW/2} y1={ly+6} x2={doorX+doorW/2} y2={ly+lobbyH-2} stroke="#C8963E" strokeWidth="2" />
+              {[0.1,0.28,0.58,0.76].map((p,i) => <rect key={i} x={doorX+doorW*p} y={ly+10} width={doorW*0.12} height={lobbyH-18} rx="1" fill="#C8963E14" stroke="#C8963E" strokeWidth="0.8" opacity="0.6" />)}
               <circle cx={doorX+doorW/2-6} cy={ly+lobbyH/2+6} r="2" fill={PK} />
               <circle cx={doorX+doorW/2+6} cy={ly+lobbyH/2+6} r="2" fill={PK} />
               {/* Steps */}
               {[0,1,2].map(i => <rect key={i} x={doorX-4-i*5} y={ly+lobbyH-8+i*4} width={doorW+8+i*10} height={3} fill={WALL} stroke={OL} strokeWidth="0.6" />)}
-              <text x={doorX+doorW/2} y={ly+lobbyH/2} textAnchor="middle" fill={AG} fontSize="10" fontWeight="700" letterSpacing="1.5">MAIN ENTRANCE</text>
+              <text x={doorX+doorW/2} y={ly+lobbyH/2} textAnchor="middle" fill="#E0AE5A" fontSize="10" fontWeight="800" letterSpacing="1.5">MAIN ENTRANCE</text>
               {/* Mailroom right */}
               <rect x={bx+bodyW*0.74} y={ly+4} width={bodyW*0.22} height={lobbyH-8} rx="4" fill="#FDE68A12" stroke="#FDE68A" strokeWidth="1.5" />
               <SvgIcon n="mailroom" x={bx+bodyW*0.85-14} y={ly+8} size={28} color="#FDE68A" />
