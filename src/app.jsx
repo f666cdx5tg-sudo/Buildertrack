@@ -1276,6 +1276,35 @@ const ScheduleView = ({ schedule, units, progress }) => {
 };
 
 // ▸ Common Areas (Fully Editable)
+// Icon + color of a common-area item. Mirrors what the building map draws, so lists and map agree.
+const ELEV_CAR_COLORS = ["#DC2626","#2563EB","#059669","#D97706","#7C3AED","#DB2777"];
+const BASE_PALETTE = ["#4ADE80","#60A5FA","#A78BFA","#FBBF24","#22D3EE","#F472B6"];
+const areaItemVisual = (area, item, idx, siblings) => {
+  const l = item.toLowerCase();
+  if (area.id === "elev") return { icon: "elevator", color: ELEV_CAR_COLORS[idx % ELEV_CAR_COLORS.length] };
+  if (area.id === "roof") {
+    if (l.includes("water")) return { icon: null, color: "#60A5FA" };
+    if (l.includes("antenna")) return { icon: null, color: "#39FF14" };
+    if (l.includes("bulkhead")) return { icon: "bulkhead", color: "#B4BCC8" };
+    return { icon: "roof", color: "#94A3B8" };
+  }
+  if (area.id === "grnd") {
+    if (/exit|door|entrance/.test(l)) return { icon: "exit", color: "#A78BFA" };
+    if (l.includes("court")) return { icon: "courtyard", color: "#4ADE80" };
+    if (l.includes("walk")) return { icon: "sidewalk", color: "#FACC15" };
+    if (l.includes("park")) return { icon: "parking", color: "#F87171" };
+    return { icon: "tree", color: "#06B6D4" };
+  }
+  if (area.id === "base") {
+    const fire = /fire|suppression|sprinkler/.test(l), boiler = l.includes("boiler");
+    const icon = boiler ? "boiler" : fire ? "fireext" : /storage|locker/.test(l) ? "box" : l.includes("laundry") ? "washer" : /mech|pump|electric/.test(l) ? "hvac" : null;
+    let color = boiler ? "#FB923C" : fire ? "#F87171" : null;
+    if (!color) { let n = 0; for (let i = 0; i < idx; i++) { const s = siblings[i].toLowerCase(); if (!(s.includes("boiler") || /fire|suppression|sprinkler/.test(s))) n++; } color = BASE_PALETTE[n % BASE_PALETTE.length]; }
+    return { icon, color };
+  }
+  return { icon: areaIconKey(area.icon), color: AG };
+};
+
 const CommonAreasView = ({ commonAreas, setCommonAreas, areaList, setAreaList }) => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [addingArea, setAddingArea] = useState(false);
@@ -1374,32 +1403,37 @@ const CommonAreasView = ({ commonAreas, setCommonAreas, areaList, setAreaList })
             </div>
 
             {/* Items */}
-            {area.items.map(item => {
+            {area.items.map((item, idx) => {
               const key = `${area.id}-${item}`;
+              const vis = areaItemVisual(area, item, idx, area.items);
               const data = commonAreas[key] || { trades: {}, status: "Pending", notes: "" };
               const assignedTrades = Object.entries(data.trades || {}).filter(([,v]) => v).map(([k]) => k);
               return (
                 <div key={item} style={{ padding: "8px 0", borderBottom: `1px solid ${BD}` }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{ width: 14, height: 14, borderRadius: 3, background: getTradeColor(data.status) }} />
-                      <span style={{ fontSize: 13, fontWeight: 600 }}>{item}</span>
-                      <span style={{ fontSize: 10, color: TXT2 }}>({data.status})</span>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: 8, background: vis.color + "22", border: `1.5px solid ${vis.color}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: vis.color, fontFamily: font, fontWeight: 800, fontSize: 13 }}>
+                        {vis.icon && ICONS[vis.icon] ? <Icon n={vis.icon} /> : item.slice(0, 1)}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: TXT }}>{item}</div>
+                        <span style={{ display: "inline-block", marginTop: 2, fontSize: 10, fontWeight: 700, fontFamily: font, padding: "1px 7px", borderRadius: 10, background: getTradeColor(data.status) + "26", color: data.status === "Pending" ? TXT2 : getTradeColor(data.status), border: `1px solid ${data.status === "Pending" ? BD : getTradeColor(data.status)}` }}>{data.status}</span>
+                      </div>
                     </div>
-                    <div style={{ display: "flex", gap: 4 }}>
+                    <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
                       <button style={{ ...S.btn("primary"), fontSize: 10, padding: "3px 8px" }}
                         onClick={() => { setSelectedItem(key); setItemNote(data.notes || ""); }}>Edit</button>
-                      <button style={{ ...S.btn("danger"), fontSize: 10, padding: "3px 6px" }}
-                        onClick={() => removeItem(area.id, item)}><Icon n="close" /></button>
+                      <button style={{ ...S.btn("danger"), fontSize: 10, padding: "3px 6px" }} title="Remove item"
+                        onClick={() => { if (confirm(`Remove "${item}" from ${area.label}?`)) removeItem(area.id, item); }}><Icon n="close" /></button>
                     </div>
                   </div>
                   {assignedTrades.length > 0 && (
-                    <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginTop: 4, marginLeft: 22 }}>
+                    <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginTop: 6, marginLeft: 44 }}>
                       {assignedTrades.map(t => <span key={t} style={S.tag(AG)}>{t}</span>)}
                     </div>
                   )}
                   {data.notes && (
-                    <div style={{ fontSize: 11, color: TXT2, marginTop: 3, marginLeft: 22, fontStyle: "italic" }}><Icon n="pencilline" /> {data.notes}</div>
+                    <div style={{ fontSize: 11, color: TXT2, marginTop: 4, marginLeft: 44, fontStyle: "italic" }}><Icon n="pencilline" /> {data.notes}</div>
                   )}
                 </div>
               );
@@ -1492,7 +1526,8 @@ const FieldMonitor = ({ units, events, setEvents }) => {
   const [newType, setNewType] = useState("progress");
   const [newUnit, setNewUnit] = useState("");
 
-  const typeColors = { arrival: AG, access: PK2, progress: AG, issue: PK2, delivery: PK, inspection: PK3 };
+  const typeColors = { arrival: "#38BDF8", access: "#ef5350", progress: "#4ADE80", issue: "#FF8A3D", delivery: "#FACC15", inspection: "#A78BFA" };
+  const unitLabel = (u) => (!u || u === "—") ? "" : /^\d+[A-Za-z]?$/.test(String(u).trim()) ? `Unit ${u}` : u;
   const logEvent = () => {
     if (!newEvent.trim()) return;
     const time = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -1504,21 +1539,24 @@ const FieldMonitor = ({ units, events, setEvents }) => {
 
   return (
     <div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <div style={S.card}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))", gap: 12 }}>
+        <div style={{ ...S.card, minWidth: 0 }}>
           <div style={S.cardTitle}><Icon n="signal" /> Live Field Events</div>
           <div style={{ maxHeight: 400, overflow: "auto" }}>
             {events.length === 0 && <div style={{ color: TXT2, fontSize: 13 }}>No events logged yet</div>}
-            {events.map((e, i) => (
-              <div key={i} style={{ display: "flex", gap: 8, padding: "8px 0", borderBottom: `1px solid ${BD}` }}>
-                <span style={{ fontFamily: font, fontSize: 10, color: TXT2, minWidth: 95 }}>{e.time}</span>
-                <div style={{ width: 8, height: 8, borderRadius: "50%", background: typeColors[e.type] || TXT2, marginTop: 4, flexShrink: 0 }} />
-                <div>
-                  <span style={{ fontSize: 12 }}>{e.msg}</span>
-                  <span style={{ fontSize: 10, color: AG, marginLeft: 6 }}>Unit {e.unit}</span>
+            {events.map((e, i) => {
+              const c = typeColors[e.type] || TXT2;
+              return (
+                <div key={i} style={{ padding: "9px 0 9px 10px", borderBottom: `1px solid ${BD}`, borderLeft: `3px solid ${c}`, marginBottom: 2 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 3 }}>
+                    <span style={{ fontSize: 9, fontWeight: 800, fontFamily: font, textTransform: "uppercase", letterSpacing: 0.6, padding: "1px 7px", borderRadius: 10, color: c, background: c + "22", border: `1px solid ${c}` }}>{e.type}</span>
+                    {unitLabel(e.unit) && <span style={{ fontSize: 11, fontWeight: 700, color: AG, fontFamily: font }}>{unitLabel(e.unit)}</span>}
+                    <span style={{ fontFamily: font, fontSize: 10, color: TXT2, marginLeft: "auto" }}>{e.time}</span>
+                  </div>
+                  <div style={{ fontSize: 13, color: TXT }}>{e.msg}</div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
             <select style={S.select} value={newType} onChange={e => setNewType(e.target.value)}>
