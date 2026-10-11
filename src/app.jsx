@@ -592,8 +592,7 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
               <circle cx={doorX+doorW/2+6} cy={ly+lobbyH/2+6} r="2" fill={PK} />
               {/* Steps */}
               {[0,1,2].map(i => <rect key={i} x={doorX-4-i*5} y={ly+lobbyH-8+i*4} width={doorW+8+i*10} height={3} fill={WALL} stroke={OL} strokeWidth="0.6" />)}
-              <SvgIcon n="entrance" x={doorX+doorW/2-14} y={ly+7} size={28} color={AG} />
-              <text x={doorX+doorW/2} y={ly+lobbyH-13} textAnchor="middle" fill={AG} fontSize="10" fontWeight="700" letterSpacing="1.5">MAIN ENTRANCE</text>
+              <text x={doorX+doorW/2} y={ly+lobbyH/2} textAnchor="middle" fill={AG} fontSize="10" fontWeight="700" letterSpacing="1.5">MAIN ENTRANCE</text>
               {/* Mailroom right */}
               <rect x={bx+bodyW*0.74} y={ly+4} width={bodyW*0.22} height={lobbyH-8} rx="4" fill="#FDE68A12" stroke="#FDE68A" strokeWidth="1.5" />
               <SvgIcon n="mailroom" x={bx+bodyW*0.85-14} y={ly+8} size={28} color="#FDE68A" />

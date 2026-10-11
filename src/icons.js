@@ -135,7 +135,6 @@ export const ICONS = {
   exit:'<path d="M13 21H5V4.5A1.5 1.5 0 016.5 3H13"/><path d="M16 8l4 4-4 4M20 12H10"/>',
   sidewalk:'<circle class="f" cx="12.2" cy="3.8" r="1.9"/><path d="M12 6.8L11.6 10.2M11.6 10.2l3 5M11.6 10.2L8.8 15.2M11.8 8.2L9 9.8M12.2 8l3 2.2 1.8.3"/><rect x="2.5" y="17.5" width="19" height="4" rx=".6"/><path d="M7.25 17.5v4M12 17.5v4M16.75 17.5v4"/>',
   courtyard:'<path d="M7 14c-2.2 0-3.5-1.7-3.5-3.5S4.8 7 6.5 7C7 4.8 9 3.5 12 3.5s5 1.3 5.5 3.5c1.7 0 3 1.4 3 3.5S19.2 14 17 14z"/><path d="M12 14v7M12 17.5l2.5-2.2M8.5 21h7"/>',
-  entrance:'<rect x="3" y="3" width="18" height="3.5" rx="1"/><path d="M9.5 4.8H7M8 3.9L7 4.8 8 5.7M14.5 4.8H17M16 3.9L17 4.8 16 5.7"/><rect x="3" y="6.5" width="18" height="14.5" rx=".8"/><path d="M12 6.5V21M10 13.5v2M14 13.5v2"/>',
   mailroom:'<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M3 7l9 6.5L21 7"/>',
   hvac:'<path d="M9.6 4.6A2 2 0 1111 8H2M12.6 19.4A2 2 0 1014 16H2M17.7 7.7A2.5 2.5 0 1119.5 12H2"/>'
 };
