@@ -2773,6 +2773,15 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
             <div style={S.card}>
               <div style={S.cardTitle}>{tradeFilter} {isHouse ? "House Map" : "Unit Map"}</div>
               <div style={{ color: TXT2, fontSize: 12, marginTop: -6, marginBottom: 10 }}>Colored = {tradeFilter} is scheduled or underway there. Shaded = not affected.</div>
+              {units.length > 0 && !units.some(u => tradeAffects(u, tradeFilter)) && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", background: "#1b2433", border: `1px solid ${BD}`, borderRadius: 8, padding: "8px 12px", marginBottom: 10, fontSize: 13 }}>
+                  <span>No {isHouse ? "rooms" : "units"} scheduled for {tradeFilter} yet. Click one to schedule it, or</span>
+                  <button style={{ ...S.btn("primary"), padding: "4px 12px", fontSize: 12 }}
+                    onClick={() => setUnits(us => us.map(u => ({ ...u, trades: { ...u.trades, [tradeFilter]: { ...u.trades[tradeFilter], scheduled: true } } })))}>
+                    Schedule all {units.length}
+                  </button>
+                </div>
+              )}
               <UnitMap isHouse={isHouse} onAddRoom={addRoom} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
             </div>
           </div>
