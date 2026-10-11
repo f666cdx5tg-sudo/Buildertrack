@@ -394,14 +394,14 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
 
           {/* ═══ BULKHEAD (CENTER on roof) ═══ */}
           {showAreas?.roof !== false && (() => {
-            const bkW = bodyW * 0.24, bkX = bx + bodyW/2 - bkW/2, bkY = by - 126;
+            const bkW = bodyW * 0.24, bkX = bx + bodyW/2 - bkW/2, bkY = by - 158, bkH = 108;
             return (<g onClick={() => setEditingCA("roof-Bulkhead")} style={{ cursor: "pointer" }}>
-              <rect x={bkX} y={bkY} width={bkW} height={76} fill="#1F2937" stroke={OL} strokeWidth="3" />
+              {/* body */}
+              <rect x={bkX} y={bkY} width={bkW} height={bkH} fill="#1F2937" stroke={OL} strokeWidth="3" />
               <rect x={bkX-5} y={bkY-6} width={bkW+10} height={8} rx="1" fill="#374151" stroke={OL} strokeWidth="2" />
-              <rect x={bkX+10} y={bkY+12} width={bkW-20} height={50} fill="#11182760" stroke={OL} strokeWidth="1" />
-              <rect x={bkX+bkW/2-14} y={bkY+22} width={28} height={40} rx="2" fill="#0D121880" stroke={OL} strokeWidth="1" />
-              <circle cx={bkX+bkW/2+10} cy={bkY+44} r="2.5" fill={OL} />
-              <text x={bkX+bkW/2} y={bkY+72} textAnchor="middle" fill="#FDE68A" fontSize="16" fontWeight="800">BULKHEAD</text>
+              <rect x={bkX+10} y={bkY+12} width={bkW-20} height={bkH-24} fill="#11182760" stroke={OL} strokeWidth="1" />
+              <SvgIcon n="bulkhead" x={bkX+bkW/2-24} y={bkY+18} size={48} color="#FDE68A" />
+              <text x={bkX+bkW/2} y={bkY+bkH-18} textAnchor="middle" fill="#FDE68A" fontSize="16" fontWeight="800">BULKHEAD</text>
             </g>);
           })()}
 
