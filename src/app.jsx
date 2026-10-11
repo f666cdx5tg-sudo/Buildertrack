@@ -550,7 +550,8 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
                 return (<g key={`car-${car}`} onClick={() => setEditingCA(`elev-${car}`)} style={{ cursor: "pointer" }}>
                   <rect x={cx} y={cy} width={carW} height={uH} rx="5" fill={stuck ? "#ef5350" : elevColors[ci] || "#888"} stroke={stuck ? "#FF0" : "#FFF"} strokeWidth={stuck ? "3" : "2"} />
                   {stuck && <><line x1={cx+4} y1={cy+4} x2={cx+carW-4} y2={cy+uH-4} stroke="#FF0" strokeWidth="2" /><line x1={cx+carW-4} y1={cy+4} x2={cx+4} y2={cy+uH-4} stroke="#FF0" strokeWidth="2" /></>}
-                  <text x={cx+carW/2} y={cy+uH/2+6} textAnchor="middle" fill="#FFF" fontSize="18" fontWeight="900">{ci+1}</text>
+                  <SvgIcon n="elevcar" x={cx+carW/2-15} y={cy+6} size={24} color="#FFF" />
+                  <text x={cx+carW/2} y={cy+uH-6} textAnchor="middle" fill="#FFF" fontSize="14" fontWeight="900">{ci+1}</text>
                   <circle cx={cx+carW-6} cy={cy+6} r="5" fill={statusCol} stroke={statusCol==="#FFFFFF"?"#999":"#FFF"} strokeWidth="1" />
                   {stuck && <text x={cx+carW/2} y={cy+uH+11} textAnchor="middle" fill="#FF0" fontSize="7" fontWeight="800">STUCK</text>}
                 </g>);
