@@ -1,6 +1,6 @@
 {
-  "name": "Repair Request",
-  "short_name": "Repairs",
+  "name": "Client Portal",
+  "short_name": "Portal",
   "id": "buildtrack-tenant",
   "start_url": "./request.html",
   "scope": "./",

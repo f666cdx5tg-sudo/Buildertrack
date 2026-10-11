@@ -1,6 +1,6 @@
 # BuildTrack NYC — v3.0.0
 
-Property maintenance and repair tracker. Installable web app (manager: `index.html`, tenants: `request.html`), works offline.
+Property maintenance and repair tracker. Installable web app (Command Center: `index.html`, Client Portal: `request.html`, Service Advisor field app: coming), works offline.
 
 ## What it does
 - Building map: tap any unit for the full tenant view (contact + call/text/email, open work tickets, trade status, notes, notices).
@@ -21,4 +21,4 @@ The version is `APP_VERSION` at the top of `src/app.jsx` — bump it on every ch
 
 ## Install as an app
 Open the live site, then Chrome/Android: menu → Install app. iPhone Safari: Share → Add to Home Screen.
-Tenants use `request.html` (the link/QR shown in Tickets → Server), which installs as "Repair Request".
+Tenants use `request.html` (the link/QR shown in Tickets → Server), which installs as "Client Portal".

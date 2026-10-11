@@ -56,9 +56,9 @@ self.addEventListener("fetch", (e) => {
 });
 `;
 
-fs.writeFileSync("index.html", page({ title: "BuildTrack NYC", manifest: "manifest.webmanifest", appTitle: "BuildTrack", js: jsBack }));
-fs.writeFileSync("request.html", page({ title: "Repair Request", manifest: "manifest-tenant.webmanifest", appTitle: "Repair Request", js: jsTenant }));
-fs.writeFileSync("manifest.webmanifest", manifest("BuildTrack NYC", "BuildTrack", "./index.html", "buildtrack-manager"));
-fs.writeFileSync("manifest-tenant.webmanifest", manifest("Repair Request", "Repairs", "./request.html", "buildtrack-tenant"));
+fs.writeFileSync("index.html", page({ title: "Command Center", manifest: "manifest.webmanifest", appTitle: "Command Center", js: jsBack }));
+fs.writeFileSync("request.html", page({ title: "Client Portal", manifest: "manifest-tenant.webmanifest", appTitle: "Client Portal", js: jsTenant }));
+fs.writeFileSync("manifest.webmanifest", manifest("Command Center", "Command", "./index.html", "buildtrack-manager"));
+fs.writeFileSync("manifest-tenant.webmanifest", manifest("Client Portal", "Portal", "./request.html", "buildtrack-tenant"));
 fs.writeFileSync("sw.js", sw);
 console.log("built v" + version, (fs.statSync("index.html").size / 1024).toFixed(0) + " KB x2");

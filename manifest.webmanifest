@@ -1,6 +1,6 @@
 {
-  "name": "BuildTrack NYC",
-  "short_name": "BuildTrack",
+  "name": "Command Center",
+  "short_name": "Command",
   "id": "buildtrack-manager",
   "start_url": "./index.html",
   "scope": "./",

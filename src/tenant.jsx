@@ -7,7 +7,7 @@ const TenantRequest = () => {
   useEffect(() => {
     if ("serviceWorker" in navigator && /^https?:/.test(window.location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {});
   }, []);
-  useEffect(() => { document.title = "Repair Request"; }, []);
+  useEffect(() => { document.title = "Client Portal"; }, []);
   const params = new URLSearchParams(window.location.hash.replace(/^#request[?&]?/, ""));
   const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
@@ -73,7 +73,7 @@ const TenantRequest = () => {
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: `${SAFE_TOP} 2px 14px` }}>
           <div style={{ width: 46, height: 46, borderRadius: 13, background: AG + "26", color: AG, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}><Icon n="wrench" /></div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.1 }}>Repair request</div>
+            <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.1 }}>Client Portal</div>
             <div style={{ fontSize: 13, color: TXT2, marginTop: 2 }}>{building}</div>
           </div>
         </div>

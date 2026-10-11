@@ -2239,7 +2239,7 @@ function App({ saved, savedCfg }) {
   }, [ticketCfg.url, ticketCfg.key]);
 
   const newTicketCount = tickets.filter(t => t.status === "New").length;
-  useEffect(() => { document.title = (newTicketCount ? `(${newTicketCount}) ` : "") + "BuildTrack NYC"; }, [newTicketCount]);
+  useEffect(() => { document.title = (newTicketCount ? `(${newTicketCount}) ` : "") + "Command Center"; }, [newTicketCount]);
 
   const mainPages = [
     { id: "dashboard", label: "Dashboard", icon: "home" },
@@ -2594,7 +2594,7 @@ function Root() {
       .then(([s, cfg]) => { if (alive) setState({ loaded: true, saved: s || null, cfg: cfg || null }); });
     return () => { alive = false; };
   }, []);
-  if (!state.loaded) return <div style={{ color: TXT2, fontFamily: font, padding: 40 }}>Loading BuildTrack…</div>;
+  if (!state.loaded) return <div style={{ color: TXT2, fontFamily: font, padding: 40 }}>Loading Command Center…</div>;
   return <App saved={state.saved} savedCfg={state.cfg} />;
 }
 
