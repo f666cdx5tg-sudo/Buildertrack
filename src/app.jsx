@@ -620,13 +620,14 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
                 const isLaundry = room.toLowerCase().includes("laundry");
                 const isMech = room.toLowerCase().includes("mech") || room.toLowerCase().includes("pump") || room.toLowerCase().includes("electric");
                 const isFire = room.toLowerCase().includes("fire") || room.toLowerCase().includes("suppression") || room.toLowerCase().includes("sprinkler");
-                const hasIcon = isStorage || isLaundry || isMech || isFire;
+                const hasIcon = isStorage || isLaundry || isMech || isFire || isBoiler;
                 return (<g key={key} onClick={() => setEditingCA(key)} style={{ cursor: "pointer" }}>
                   <rect x={rx} y={bsy+4} width={roomW-6} height={bsmtH-8} rx="5" fill={rc+"25"} stroke={rc} strokeWidth="2" />
-                  {isStorage && <SvgIcon n="box" x={rx+roomW/2-4-10} y={bsy+8} size={20} color={rc} />}
-                  {isLaundry && <SvgIcon n="basket" x={rx+roomW/2-4-10} y={bsy+8} size={20} color={rc} />}
-                  {isMech && <SvgIcon n="gear" x={rx+roomW/2-4-10} y={bsy+8} size={20} color={rc} />}
-                  {isFire && <SvgIcon n="extinguisher" x={rx+roomW/2-4-10} y={bsy+8} size={20} color={rc} />}
+                  {isStorage && <SvgIcon n="shelves" x={rx+roomW/2-4-12} y={bsy+7} size={24} color={rc} />}
+                  {isLaundry && <SvgIcon n="washer" x={rx+roomW/2-4-12} y={bsy+7} size={24} color={rc} />}
+                  {isMech && <SvgIcon n="cog" x={rx+roomW/2-4-12} y={bsy+7} size={24} color={rc} />}
+                  {isBoiler && <SvgIcon n="boiler" x={rx+roomW/2-4-12} y={bsy+7} size={24} color={rc} />}
+                  {isFire && <SvgIcon n="sprinkler" x={rx+roomW/2-4-12} y={bsy+7} size={24} color={rc} />}
                   <text x={rx+(roomW-6)/2} y={bsy+bsmtH/2+(hasIcon?12:0)} textAnchor="middle" fill={rc} fontSize="10" fontWeight="800">{room}</text>
                   <circle cx={rx+roomW-14} cy={bsy+12} r="6" fill={statusCol} stroke={statusCol==="#FFFFFF"?"#999":rc} strokeWidth="1.5" />
                 </g>);
