@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import qrcode from "qrcode-generator";
 import { ICONS } from "./icons.js";
 
-const APP_VERSION = "3.0.5";
+const APP_VERSION = "3.0.6";
 const DEFAULT_PROJECT = "456 Grand Ave — Full Building Renovation";
 
 // ─── DATA & CONSTANTS ───────────────────────────────────────────────────────
@@ -136,6 +136,7 @@ const SAFE_TOP = "calc(max(env(safe-area-inset-top, 14px), 14px) + 10px)";
 
 const S = {
   app: { fontFamily: fontSans, background: BG1, color: TXT, minHeight: "100vh", display: "flex", flexDirection: "column" },
+  navBtn: (active) => ({ padding: "9px 14px", borderRadius: 10, border: `1.5px solid ${active ? PK : BD}`, background: active ? PK + "1f" : "transparent", color: active ? PK : TXT2, cursor: "pointer", fontSize: 14, fontWeight: 700, fontFamily: font }),
   page: { flex: 1, padding: 16, maxWidth: 1400, margin: "0 auto", width: "100%" },
   card: { background: BG2, border: `1px solid ${BD}`, borderRadius: 14, padding: 16, marginBottom: 12 },
   cardTitle: { fontFamily: font, fontSize: 13, fontWeight: 700, color: PK, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.07em" },
