@@ -10,7 +10,7 @@ if (/^#request/.test(window.location.hash)) window.location.replace("request.htm
 const DEFAULT_PROJECT = "456 Grand Ave — Full Building Renovation";
 
 // ─── DATA & CONSTANTS ───────────────────────────────────────────────────────
-const TRADE_ICONS = { "Plumbing":"faucet2","Carpentry":"hammer","Windows":"window","Electrical":"plug","Painting":"roller","Heating":"flame","Cooling":"snow","Tiling":"tiles","Appliances":"washer","Minor Repairs":"toolbox","Major Repairs":"hardhat" };
+const TRADE_ICONS = { "Plumbing":"faucet2","Carpentry":"hammer","Windows":"window","Electrical":"plug","Painting":"roller","Heating":"thermosun","Cooling":"thermosnow","Tiling":"tiles","Appliances":"washer","Minor Repairs":"toolbox","Major Repairs":"hardhat" };
 const TRADE_COLORS = { "Plumbing":"#42a5f5","Carpentry":"#d4a373","Windows":"#66bb6a","Electrical":"#FFD60A","Painting":"#bf5af2","Heating":"#ff7043","Cooling":"#80deea","Tiling":"#f06292","Appliances":"#26a69a","Minor Repairs":"#b0bec5","Major Repairs":"#ef5350" };
 const TRADES = ["Plumbing","Carpentry","Windows","Electrical","Painting","Heating","Cooling","Tiling","Appliances","Minor Repairs","Major Repairs"];
 const PHASES = ["Pending","Demolition","Rough-In","Installation","Finishing","Inspection","Complete"];
