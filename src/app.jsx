@@ -3,11 +3,12 @@ import { createRoot } from "react-dom/client";
 import qrcode from "qrcode-generator";
 import { ICONS } from "./icons.js";
 
-const APP_VERSION = "3.0.2";
+const APP_VERSION = "3.0.3";
 const DEFAULT_PROJECT = "456 Grand Ave — Full Building Renovation";
 
 // ─── DATA & CONSTANTS ───────────────────────────────────────────────────────
 const TRADE_ICONS = { "Plumbing":"faucet2","Carpentry":"hammer","Windows":"window","Electrical":"bolt","Painting":"roller","Heating":"flame","Cooling":"snow","Tiling":"tiles","Minor Repairs":"screwdriver","Major Repairs":"hardhat" };
+const TRADE_COLORS = { "Plumbing":"#42a5f5","Carpentry":"#d4a373","Windows":"#66bb6a","Electrical":"#FFD60A","Painting":"#bf5af2","Heating":"#ff7043","Cooling":"#80deea","Tiling":"#f06292","Minor Repairs":"#b0bec5","Major Repairs":"#ef5350" };
 const TRADES = ["Plumbing","Carpentry","Windows","Electrical","Painting","Heating","Cooling","Tiling","Minor Repairs","Major Repairs"];
 const PHASES = ["Pending","Demolition","Rough-In","Installation","Finishing","Inspection","Complete"];
 const STATUS_COLORS = { "Pending":"#FFFFFF", "Started":"#ef5350", "In Progress":"#F1C40F", "Complete":"#66bb6a", "Vacant":"#FF8C00" };
@@ -910,7 +911,7 @@ const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicke
                   return (
                     <div key={tr} onClick={() => setTab("trades")} style={{ display: "flex", alignItems: "center", gap: 6, background: BG1, border: `1px solid ${BD}`, borderRadius: 6, padding: "6px 8px", fontSize: 12, cursor: "pointer" }}>
                       <span style={{ width: 10, height: 10, borderRadius: 3, background: getTradeColor(t.status), flexShrink: 0 }} />
-                      <span style={{ flex: 1, minWidth: 0 }}><Icon n={TRADE_ICONS[tr] || "wrench"} /> {tr}</span>
+                      <span style={{ flex: 1, minWidth: 0 }}><Icon n={TRADE_ICONS[tr] || "wrench"} style={{ color: TRADE_COLORS[tr] }} /> {tr}</span>
                       <span style={{ color: TXT2, fontSize: 10 }}>{t.status}{t.scheduled ? " · sched" : ""}</span>
                     </div>
                   );
@@ -2174,7 +2175,7 @@ const TicketsPanel = ({ tickets, onOpen, connected }) => {
         <div key={t.id} onClick={onOpen} style={{ display: "flex", gap: 10, alignItems: "center", padding: "7px 0", borderTop: `1px solid ${BD}`, cursor: "pointer", fontSize: 13 }}>
           <span style={{ width: 8, height: 8, borderRadius: "50%", background: TICKET_COLORS[t.status], flexShrink: 0 }} />
           <span style={{ fontFamily: font, fontWeight: 700, color: AG, width: 44, flexShrink: 0 }}>{t.unit}</span>
-          <span style={{ flexShrink: 0 }}><Icon n={TRADE_ICONS[t.category] || "wrench"} /></span>
+          <span style={{ flexShrink: 0 }}><Icon n={TRADE_ICONS[t.category] || "wrench"} style={{ color: TRADE_COLORS[t.category] }} /></span>
           <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.priority === "Urgent" && <strong style={{ color: PK2 }}>URGENT · </strong>}{t.description}</span>
           <span style={{ color: TXT2, fontSize: 11, flexShrink: 0 }}>{ticketAge(t.createdAt)}</span>
         </div>
@@ -2468,7 +2469,7 @@ function App({ saved, savedCfg }) {
                 const tradeProgress = progress[trade] || 0;
                 return (
                   <button key={p.id} onClick={() => { setPage(p.id); setTradeFilter(trade); setDrawer(false); }} style={navItem(page === p.id, PK)}>
-                    <Icon n={p.icon} size={26} />
+                    <Icon n={p.icon} size={26} style={{ color: TRADE_COLORS[trade] }} />
                     <div style={{ flex: 1 }}>
                       <div>{trade}</div>
                       <div style={{ height: 3, borderRadius: 2, background: BD, marginTop: 4, overflow: "hidden" }}>
