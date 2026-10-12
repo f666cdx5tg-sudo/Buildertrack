@@ -2273,12 +2273,22 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
   const startDrag = (e, u, mode) => {
     if (!arrange) return;
     e.stopPropagation(); e.currentTarget.setPointerCapture?.(e.pointerId); setSelId(u.id);
-    setDrag({ id: u.id, mode, sx: e.clientX, sy: e.clientY, orig: u.plan, cur: u.plan });
+    const cv = e.currentTarget.closest("[data-plancanvas]"), k = cv && cv.offsetWidth ? cv.getBoundingClientRect().width / cv.offsetWidth : 1;   // text-size zoom changes px per foot on screen
+    setDrag({ id: u.id, mode, sx: e.clientX, sy: e.clientY, orig: u.plan, cur: u.plan, k: isFinite(k) && k > 0.2 ? k : 1 });
   };
   const onMove = (e) => {
     if (!drag) return;
-    const dx = Math.round((e.clientX - drag.sx) / PX), dy = Math.round((e.clientY - drag.sy) / PX), o = drag.orig;
-    setDrag({ ...drag, cur: drag.mode === "move" ? { ...o, x: Math.max(0, o.x + dx), y: Math.max(0, o.y + dy) } : { ...o, w: Math.max(1, o.w + dx), h: Math.max(1, o.h + dy) } });
+    const dx = Math.round((e.clientX - drag.sx) / (PX * drag.k)), dy = Math.round((e.clientY - drag.sy) / (PX * drag.k)), o = drag.orig, m = drag.mode;
+    let { x, y, w, h } = o;
+    if (m === "move") { x = Math.max(0, o.x + dx); y = Math.max(0, o.y + dy); }
+    else {
+      // Drag any side or corner: east/south grow the far edge, west/north move the near edge (the room's other side stays put).
+      if (m.includes("e")) w = Math.max(1, o.w + dx);
+      if (m.includes("s")) h = Math.max(1, o.h + dy);
+      if (m.includes("w")) { const nx = Math.min(o.x + o.w - 1, Math.max(0, o.x + dx)); w = o.w - (nx - o.x); x = nx; }
+      if (m.includes("n")) { const ny = Math.min(o.y + o.h - 1, Math.max(0, o.y + dy)); h = o.h - (ny - o.y); y = ny; }
+    }
+    setDrag({ ...drag, cur: { ...o, x, y, w, h } });
   };
   const onUp = () => { if (!drag) return; if (!bad && live) commit(live); setDrag(null); };
   const sel = arrange ? rooms.find(u => u.id === selId && u.plan) : null;
@@ -2316,7 +2326,7 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
         <button style={{ ...S.btn(arrange ? "primary" : undefined), padding: "8px 14px", fontSize: 13 }} onClick={() => { setArrange(a => !a); setSelId(null); }}>{arrange ? "Lock layout" : "Arrange rooms"}</button>
         <button style={{ ...S.btn(), padding: "8px 14px", fontSize: 13 }} onClick={() => onAddRoomClick(cur, levels[cur].label)}>+ Room</button>
         <button style={{ ...S.btn(), padding: "8px 14px", fontSize: 13 }} onClick={() => onEditLevel(cur, levels[cur].label)}><Icon n="pencil" /> Edit {levels[cur].label}</button>
-        <span style={{ fontSize: 12, color: TXT2 }}>{arrange ? "Drag a room to move it, drag its corner to resize, double-click to open it. 1 square = 1 ft." : "Layout locked. Tap a room to open it. Tap Arrange rooms to move things. 1 square = 1 ft."}</span>
+        <span style={{ fontSize: 12, color: TXT2 }}>{arrange ? "Drag a room to move it. Tap a room, then drag any side or corner to enlarge or shrink it. Double-click to open it. 1 square = 1 ft." : "Layout locked. Tap a room to open it. Tap Arrange rooms to move things. 1 square = 1 ft."}</span>
       </div>
       {arrange && unplaced.length > 0 && (
         <div style={{ ...S.card, padding: 10, marginBottom: 10 }}>
@@ -2368,7 +2378,7 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
         </div>
       )}
       <div style={{ overflow: "auto", border: `2px solid ${OL}`, borderRadius: 8, background: "#0b1220", maxHeight: 640 }}>
-        <div style={{ position: "relative", width: cols * PX, height: rowsN * PX, backgroundImage: `linear-gradient(${OL}33 1px, transparent 1px), linear-gradient(90deg, ${OL}33 1px, transparent 1px)`, backgroundSize: `${PX}px ${PX}px`, touchAction: arrange ? "none" : "auto" }}>
+        <div data-plancanvas="1" style={{ position: "relative", width: cols * PX, height: rowsN * PX, backgroundImage: `linear-gradient(${OL}33 1px, transparent 1px), linear-gradient(90deg, ${OL}33 1px, transparent 1px)`, backgroundSize: `${PX}px ${PX}px`, touchAction: arrange ? "none" : "auto" }}>
           {placed.map(u => {
             const r = rectOf(u), isDrag = drag && drag.id === u.id;
             const color = tradeFilter ? (u.vacant ? STATUS_COLORS["Vacant"] : getTradeColor(u.trades[tradeFilter]?.status)) : getUnitColor(u);
@@ -2399,7 +2409,20 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
                 </div>
                 {done && <svg width="14" height="14" viewBox="0 0 16 16" style={{ position: "absolute", right: 3, bottom: 3 }}><path d="M2 8.5 l4 4 l8 -9" fill="none" stroke={DONE_OK} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                 {tk && <span style={{ position: "absolute", left: 3, bottom: 3, minWidth: 14, height: 14, borderRadius: 7, background: tk.urgent ? "#ef5350" : PK, color: "#000", fontSize: 9, lineHeight: "14px", textAlign: "center" }}>{tk.open}</span>}
-                {arrange && <div onPointerDown={e => startDrag(e, u, "size")} onPointerMove={onMove} onPointerUp={onUp} style={{ position: "absolute", right: 0, bottom: 0, width: 16, height: 16, cursor: "nwse-resize", background: "linear-gradient(135deg, transparent 50%, #FFFFFFcc 50%)" }} />}
+                {arrange && (() => {
+                  const H = Math.max(5, Math.min(12, Math.floor(Math.min(r.w, r.h) * PX / 3))), on = selId === u.id;
+                  const E = (m, st, cur, bar) => <div key={m} onPointerDown={e => startDrag(e, u, m)} onPointerMove={onMove} onPointerUp={onUp}
+                    style={{ position: "absolute", cursor: cur, touchAction: "none", display: "flex", alignItems: "center", justifyContent: "center", ...st, ...(bar ? {} : { background: on ? AG : "transparent", border: on ? "1.5px solid #FFF" : "none", boxSizing: "border-box", borderRadius: 3 }) }}>
+                    {bar && on && <span style={{ display: "block", background: AG, border: "1.5px solid #FFF", boxSizing: "content-box", borderRadius: 3, ...bar }} />}</div>;
+                  return [
+                    E("n", { top: 0, left: H, right: H, height: H }, "ns-resize", { width: 22, height: 3 }),
+                    E("s", { bottom: 0, left: H, right: H, height: H }, "ns-resize", { width: 22, height: 3 }),
+                    E("w", { left: 0, top: H, bottom: H, width: H }, "ew-resize", { width: 3, height: 22 }),
+                    E("e", { right: 0, top: H, bottom: H, width: H }, "ew-resize", { width: 3, height: 22 }),
+                    E("nw", { left: 0, top: 0, width: H, height: H }, "nwse-resize"), E("ne", { right: 0, top: 0, width: H, height: H }, "nesw-resize"),
+                    E("sw", { left: 0, bottom: 0, width: H, height: H }, "nesw-resize"), E("se", { right: 0, bottom: 0, width: H, height: H }, "nwse-resize"),
+                  ];
+                })()}
               </div>
             );
           })}
