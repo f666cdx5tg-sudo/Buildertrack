@@ -2142,7 +2142,7 @@ const defaultSize = (name = "") => /door/i.test(name) ? [4, 2] : /stair/i.test(n
 const APT_COLORS = ["#FFAA33", "#0A84FF", "#66bb6a", "#ef5350"];
 const aptColor = (apt, list = []) => { const i = list.indexOf(apt); return i >= 0 ? APT_COLORS[i % APT_COLORS.length] : apt ? "#8b95a7" : "#3b4a63"; };
 const rectsOverlap = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLevel, aptList = [], tradeFilter, ticketInfo, floor, setFloor }) => {
+const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLevel, onPlanMany, aptList = [], tradeFilter, ticketInfo, floor, setFloor }) => {
   const floors = Object.keys(levels).map(Number).sort((a, b) => b - a);
   const [arrange, setArrange] = useState(true);
   const [selId, setSelId] = useState(null);
@@ -2157,6 +2157,19 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
   const freeSpot = (w, h) => {
     for (let y = 0; y < 200; y++) for (let x = 0; x <= cols - w; x++) { const r = { x, y, w, h }; if (!placed.some(o => rectsOverlap(r, o.plan))) return r; }
     return { x: 0, y: 0, w, h };
+  };
+  // Lay every not-yet-placed room out in tidy rows (one row per apartment) as a starting point; you drag them from there.
+  const placeAll = () => {
+    const out = [], cap = 44; let y = placed.reduce((m, o) => Math.max(m, o.plan.y + o.plan.h + 1), 0), x = 0, rowH = 0, lastApt = null;
+    const taken = [...placed.map(o => o.plan)];
+    unplaced.forEach(u => {
+      const [w, h] = defaultSize(u.unit);
+      if (lastApt !== null && (u.apt || "") !== lastApt) { y += rowH + 1; x = 0; rowH = 0; }
+      if (x + w > cap && x > 0) { y += rowH + 1; x = 0; rowH = 0; }
+      lastApt = u.apt || "";
+      out.push({ id: u.id, plan: { x, y, w, h } }); x += w + 1; rowH = Math.max(rowH, h);
+    });
+    onPlanMany(out);
   };
   const startDrag = (e, u, mode) => {
     if (!arrange) return;
@@ -2189,7 +2202,10 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
       </div>
       {arrange && unplaced.length > 0 && (
         <div style={{ ...S.card, padding: 10, marginBottom: 10 }}>
-          <div style={{ fontSize: 12, color: TXT2, marginBottom: 6 }}>Not on the plan yet — tap to place, then drag it where it goes:</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+            <span style={{ fontSize: 12, color: TXT2 }}>Not on the plan yet — tap one to place it, or</span>
+            <button style={{ ...S.btn("primary"), padding: "6px 12px", fontSize: 12 }} onClick={placeAll}>Place all {unplaced.length}</button>
+          </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{unplaced.map(u => <button key={u.id} style={{ ...S.btn(), padding: "6px 10px", fontSize: 12 }} onClick={() => { onPlan(u.id, freeSpot(...defaultSize(u.unit))); setSelId(u.id); }}>+ {u.unit}</button>)}</div>
         </div>
       )}
@@ -2220,7 +2236,7 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
                   border: `3px solid ${isDrag && bad ? "#ef5350" : selId === u.id && arrange ? "#FFF" : aptColor(u.apt, aptList)}`,
                   color: done ? DONE_TXT : dim ? "#7b8aa3" : (color === "#FFFFFF" || color === "#F1C40F" ? "#000" : "#FFF"),
                   display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", overflow: "hidden", padding: 2,
-                  cursor: arrange ? "move" : "pointer", userSelect: "none", fontFamily: font, zIndex: isDrag ? 5 : 1 }}>
+                  cursor: arrange ? "move" : "pointer", userSelect: "none", touchAction: arrange ? "none" : "auto", fontFamily: font, zIndex: isDrag ? 5 : 1 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.1 }}>{label}</div>
                 <div style={{ fontSize: 10, opacity: 0.75 }}>{u.roofType ? `${u.roofType} · ` : ""}{r.w}×{r.h} ft</div>
                 {done && <svg width="14" height="14" viewBox="0 0 16 16" style={{ position: "absolute", right: 3, bottom: 3 }}><path d="M2 8.5 l4 4 l8 -9" fill="none" stroke={DONE_OK} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
@@ -2235,7 +2251,7 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
     </div>
   );
 };
-const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddRoom, onPlan, onMoveRoom, levelsDef = [], onAddLevel, aptList = [], onRenameLevel, onDeleteLevel, onAddApt, onRenameApt, onDeleteApt }) => {
+const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddRoom, onPlan, onPlanMany, onMoveRoom, levelsDef = [], onAddLevel, aptList = [], onRenameLevel, onDeleteLevel, onAddApt, onRenameApt, onDeleteApt }) => {
   const aptNames = aptList;
   const multi = aptNames.length > 0 || units.some(u => u.apt);
   const levels = {};
@@ -2283,7 +2299,7 @@ const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddR
         <button style={{ ...S.btn(), padding: "8px 16px", fontSize: 13 }} onClick={() => setDlg({ kind: "apts" })}><Icon n="pencil" /> Apartments{aptList.length ? ` (${aptList.length})` : ""}</button>
         <button style={{ ...S.btn(), padding: "8px 16px", fontSize: 13 }} onClick={() => setDlg({ kind: "prop" })}><Icon n="pencil" /> Edit property</button>
       </div>
-      {view === "plan" && <FloorPlan units={units} levels={levels} onSelect={onSelect} onPlan={onPlan} tradeFilter={tradeFilter} ticketInfo={ticketInfo} onAddRoomClick={(floor, label) => { setApt(""); setDlg({ kind: "room", floor, label }); }} onEditLevel={openEditLevel} aptList={aptList} floor={planFloor} setFloor={setPlanFloor} />}
+      {view === "plan" && <FloorPlan units={units} levels={levels} onSelect={onSelect} onPlan={onPlan} tradeFilter={tradeFilter} ticketInfo={ticketInfo} onAddRoomClick={(floor, label) => { setApt(""); setDlg({ kind: "room", floor, label }); }} onEditLevel={openEditLevel} onPlanMany={onPlanMany} aptList={aptList} floor={planFloor} setFloor={setPlanFloor} />}
       {view !== "plan" && <>
       <div style={{ clipPath: "polygon(8% 100%, 50% 0, 92% 100%)", background: "#2a3446", height: 46, margin: "0 auto", width: "70%", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 6, color: "#B4BCC8", fontSize: 11, fontWeight: 700, letterSpacing: 2 }}>ROOF</div>
       <div style={{ border: `2px solid ${OL}`, borderRadius: 6, background: "#0b1220", overflow: "hidden" }}>
@@ -2652,6 +2668,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
     if (at < 0) return [...rest, moved];
     return [...rest.slice(0, at), moved, ...rest.slice(at)];
   });
+  const updatePlans = (list) => setUnits(prev => prev.map(u => { const f = list.find(x => x.id === u.id); return f ? { ...u, plan: f.plan } : u; }));
   const updatePlan = (id, plan) => setUnits(prev => prev.map(u => u.id === id ? { ...u, plan: plan || null } : u));
   const addLevel = (floor, label) => setHouseLevels(ls => ls.some(l => l.floor === floor) ? ls : [...ls, { floor, label }]);
   const deleteRoom = (id) => { setUnits(prev => prev.filter(u => u.id !== id)); setSelectedUnit(null);
@@ -3093,7 +3110,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
             <div style={S.card}>
               <div style={S.cardTitle}>{isHouse ? "House Map" : "Unit Map"}</div>
               <Legend />
-              <UnitMap isHouse={isHouse} onPlan={updatePlan} onMoveRoom={moveRoom} onAddRoom={addRoom} levelsDef={houseLevels} onAddLevel={addLevel} aptList={aptList} onRenameLevel={renameLevel} onDeleteLevel={deleteLevel} onAddApt={addApt} onRenameApt={renameApt} onDeleteApt={deleteApt} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
+              <UnitMap isHouse={isHouse} onPlan={updatePlan} onPlanMany={updatePlans} onMoveRoom={moveRoom} onAddRoom={addRoom} levelsDef={houseLevels} onAddLevel={addLevel} aptList={aptList} onRenameLevel={renameLevel} onDeleteLevel={deleteLevel} onAddApt={addApt} onRenameApt={renameApt} onDeleteApt={deleteApt} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
             </div>
 
             <TicketsPanel tickets={tickets} connected={!!ticketCfg.url} onOpen={() => setPage("tickets")} />
@@ -3151,7 +3168,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
                   </button>
                 </div>
               )}
-              <UnitMap isHouse={isHouse} onPlan={updatePlan} onMoveRoom={moveRoom} onAddRoom={addRoom} levelsDef={houseLevels} onAddLevel={addLevel} aptList={aptList} onRenameLevel={renameLevel} onDeleteLevel={deleteLevel} onAddApt={addApt} onRenameApt={renameApt} onDeleteApt={deleteApt} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
+              <UnitMap isHouse={isHouse} onPlan={updatePlan} onPlanMany={updatePlans} onMoveRoom={moveRoom} onAddRoom={addRoom} levelsDef={houseLevels} onAddLevel={addLevel} aptList={aptList} onRenameLevel={renameLevel} onDeleteLevel={deleteLevel} onAddApt={addApt} onRenameApt={renameApt} onDeleteApt={deleteApt} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
             </div>
           </div>
         )}
