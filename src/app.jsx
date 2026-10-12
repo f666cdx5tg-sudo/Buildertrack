@@ -2141,6 +2141,14 @@ const PX = 18; // pixels per foot on the floor plan
 const defaultSize = (name = "") => /door/i.test(name) ? [4, 2] : /stair/i.test(name) ? [4, 10] : /chimney/i.test(name) ? [4, 4] : /foyer/i.test(name) ? [8, 8] : /driveway/i.test(name) ? [12, 30] : /backyard|yard/i.test(name) ? [30, 20] : /gutter|downspout/i.test(name) ? [20, 2] : [10, 10];
 const APT_COLORS = ["#FFAA33", "#0A84FF", "#66bb6a", "#ef5350"];
 const aptColor = (apt, list = []) => { const i = list.indexOf(apt); return i >= 0 ? APT_COLORS[i % APT_COLORS.length] : apt ? "#8b95a7" : "#3b4a63"; };
+// Room shape + style are saved on the room's plan: { shape, rot, fill, line, dash, bw }.
+const PLAN_SHAPES = [["rect", "Rectangle"], ["round", "Rounded"], ["oval", "Oval"], ["L", "L-shape"], ["cut", "Cut corner"]];
+const PLAN_FILLS = ["#FFAA33", "#0A84FF", "#66bb6a", "#ef5350", "#F1C40F", "#9b59b6", "#1abc9c", "#8b95a7", "#FFFFFF"];
+const PLAN_DASH = [["solid", "Solid"], ["dashed", "Dashed"], ["dotted", "Dotted"], ["none", "None"]];
+const lightColor = (c) => { const m = /^#?([0-9a-f]{6})$/i.exec(c || ""); if (!m) return false; const n = parseInt(m[1], 16); return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 > 150; };
+const spinPts = (pts, rot) => { let p = pts; for (let i = 0; i < (rot || 0); i++) p = p.map(([x, y]) => [100 - y, x]); return p.map(q => q.join(",")).join(" "); };
+const planPoly = (shape, rot) => shape === "L" ? spinPts([[0, 0], [50, 0], [50, 50], [100, 50], [100, 100], [0, 100]], rot) : shape === "cut" ? spinPts([[0, 0], [70, 0], [100, 30], [100, 100], [0, 100]], rot) : null;
+const L_BAND = [{ left: 0, top: "50%", width: "100%", height: "50%" }, { left: 0, top: 0, width: "50%", height: "100%" }, { left: 0, top: 0, width: "100%", height: "50%" }, { left: "50%", top: 0, width: "50%", height: "100%" }];
 const rectsOverlap = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLevel, onPlanMany, aptList = [], tradeFilter, ticketInfo, floor, setFloor }) => {
   const floors = Object.keys(levels).map(Number).sort((a, b) => b - a);
@@ -2184,6 +2192,8 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
   const onUp = () => { if (!drag) return; if (!bad) onPlan(drag.id, drag.cur); setDrag(null); };
   const sel = arrange ? rooms.find(u => u.id === selId && u.plan) : null;
   const OL = "#3b4a63";
+  const setStyle = (patch) => { const np = { ...sel.plan, ...patch }; Object.keys(np).forEach(k => { if (np[k] == null) delete np[k]; }); onPlan(sel.id, np); };
+  const swatch = (c, on) => ({ width: 22, height: 22, borderRadius: 11, background: c, border: on ? "3px solid #FFF" : `2px solid ${BD}`, padding: 0, cursor: "pointer" });
   const numIn = (label, key) => (
     <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: TXT2 }}>{label}
       <input type="number" style={{ ...S.input, width: 64, padding: "6px 8px" }} value={sel.plan[key]} min={key === "w" || key === "h" ? 1 : 0}
@@ -2216,6 +2226,30 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
           {numIn("W ft", "w")}{numIn("D ft", "h")}{numIn("X", "x")}{numIn("Y", "y")}
           <button style={{ ...S.btn(), padding: "6px 10px", fontSize: 12 }} onClick={() => onSelect(sel)}>Open room</button>
           <button style={{ ...S.btn(), padding: "6px 10px", fontSize: 12 }} onClick={() => { onPlan(sel.id, null); setSelId(null); }}>Remove from plan</button>
+          <div style={{ flexBasis: "100%", display: "flex", flexDirection: "column", gap: 8, borderTop: `1px solid ${BD}`, paddingTop: 8 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: TXT2, width: 52 }}>Shape</span>
+              {PLAN_SHAPES.map(([k, l]) => <button key={k} style={{ ...S.btn((sel.plan.shape || "rect") === k ? "primary" : undefined), padding: "5px 10px", fontSize: 12 }} onClick={() => setStyle({ shape: k === "rect" ? null : k })}>{l}</button>)}
+              {(sel.plan.shape === "L" || sel.plan.shape === "cut") && <button style={{ ...S.btn(), padding: "5px 10px", fontSize: 12 }} onClick={() => setStyle({ rot: ((sel.plan.rot || 0) + 1) % 4 })}>Rotate ↻</button>}
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: TXT2, width: 52 }}>Fill</span>
+              <button title="Automatic (status color)" style={{ ...S.btn(!sel.plan.fill ? "primary" : undefined), padding: "5px 10px", fontSize: 12 }} onClick={() => setStyle({ fill: null })}>Auto</button>
+              {PLAN_FILLS.map(c => <button key={c} aria-label={"Fill " + c} onClick={() => setStyle({ fill: c })} style={swatch(c, sel.plan.fill === c)} />)}
+              <label style={{ fontSize: 12, color: TXT2 }}>Custom <input type="color" value={sel.plan.fill || "#3b4a63"} onChange={e => setStyle({ fill: e.target.value })} style={{ verticalAlign: "middle", width: 28, height: 24, border: 0, background: "none", padding: 0 }} /></label>
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: TXT2, width: 52 }}>Outline</span>
+              <button title="Automatic (apartment color)" style={{ ...S.btn(!sel.plan.line ? "primary" : undefined), padding: "5px 10px", fontSize: 12 }} onClick={() => setStyle({ line: null })}>Auto</button>
+              {PLAN_FILLS.map(c => <button key={c} aria-label={"Outline " + c} onClick={() => setStyle({ line: c })} style={swatch(c, sel.plan.line === c)} />)}
+              {PLAN_DASH.map(([k, l]) => <button key={k} style={{ ...S.btn((sel.plan.dash || "solid") === k ? "primary" : undefined), padding: "5px 10px", fontSize: 12 }} onClick={() => setStyle({ dash: k === "solid" ? null : k })}>{l}</button>)}
+              {[[2, "Thin"], [3, "Normal"], [6, "Thick"]].map(([w, l]) => <button key={w} style={{ ...S.btn((sel.plan.bw || 3) === w ? "primary" : undefined), padding: "5px 10px", fontSize: 12 }} onClick={() => setStyle({ bw: w === 3 ? null : w })}>{l}</button>)}
+            </div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <button style={{ ...S.btn(), padding: "5px 10px", fontSize: 12 }} onClick={() => setStyle({ shape: null, rot: null, fill: null, line: null, dash: null, bw: null })}>Reset style</button>
+              <span style={{ fontSize: 11, color: TXT2 }}>Custom fill shows when no trade is selected; shapes snap to their outer box.</span>
+            </div>
+          </div>
         </div>
       )}
       <div style={{ overflow: "auto", border: `2px solid ${OL}`, borderRadius: 8, background: "#0b1220", maxHeight: 640 }}>
@@ -2227,18 +2261,26 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
             const done = isDone(u, tradeFilter);
             const tk = ticketInfo?.[u.unit.toUpperCase()];
             const label = u.apt && u.unit.startsWith(u.apt + " ") ? u.unit.slice(u.apt.length + 1) : u.unit;
+            const pl = u.plan, shape = pl.shape || "rect", poly = planPoly(shape, pl.rot);
+            const radius = shape === "oval" ? "50%" : shape === "round" ? 16 : poly ? 0 : 4;
+            const custom = !tradeFilter && !done && pl.fill;
+            const fillC = done ? DONE_BG : dim ? "#1b2433" : (custom || color);
+            const lineC = pl.line || aptColor(u.apt, aptList), lineDash = pl.dash || "solid", bw = pl.bw || 3;
+            const txtC = done ? DONE_TXT : dim ? "#7b8aa3" : (custom ? (lightColor(pl.fill) ? "#000" : "#FFF") : (color === "#FFFFFF" || color === "#F1C40F" ? "#000" : "#FFF"));
             return (
               <div key={u.id}
                 onPointerDown={e => startDrag(e, u, "move")} onPointerMove={onMove} onPointerUp={onUp}
                 onClick={() => { if (!arrange) onSelect(u); }} onDoubleClick={() => onSelect(u)}
-                style={{ position: "absolute", left: r.x * PX, top: r.y * PX, width: r.w * PX, height: r.h * PX, boxSizing: "border-box", borderRadius: 4,
-                  background: done ? DONE_BG : dim ? "#1b2433" : color, opacity: dim && !done ? 0.6 : 1,
-                  border: `3px solid ${isDrag && bad ? "#ef5350" : selId === u.id && arrange ? "#FFF" : aptColor(u.apt, aptList)}`,
-                  color: done ? DONE_TXT : dim ? "#7b8aa3" : (color === "#FFFFFF" || color === "#F1C40F" ? "#000" : "#FFF"),
-                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", overflow: "hidden", padding: 2,
-                  cursor: arrange ? "move" : "pointer", userSelect: "none", touchAction: arrange ? "none" : "auto", fontFamily: font, zIndex: isDrag ? 5 : 1 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.1 }}>{label}</div>
-                <div style={{ fontSize: 10, opacity: 0.75 }}>{u.roofType ? `${u.roofType} · ` : ""}{r.w}×{r.h} ft</div>
+                style={{ position: "absolute", left: r.x * PX, top: r.y * PX, width: r.w * PX, height: r.h * PX, boxSizing: "border-box", borderRadius: radius,
+                  background: poly ? "transparent" : fillC, opacity: dim && !done ? 0.6 : 1,
+                  border: poly ? "none" : `${lineDash === "none" ? 0 : bw}px ${lineDash === "none" ? "solid" : lineDash} ${lineC}`,
+                  outline: isDrag && bad ? "3px solid #ef5350" : selId === u.id && arrange ? "2px solid #FFF" : "none", outlineOffset: 1,
+                  color: txtC, overflow: "hidden", cursor: arrange ? "move" : "pointer", userSelect: "none", touchAction: arrange ? "none" : "auto", fontFamily: font, zIndex: isDrag ? 5 : 1 }}>
+                {poly && <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0 }}><polygon points={poly} fill={fillC} stroke={lineDash === "none" ? "none" : lineC} strokeWidth={bw} strokeDasharray={lineDash === "dashed" ? "8 5" : lineDash === "dotted" ? "2 4" : undefined} vectorEffect="non-scaling-stroke" strokeLinejoin="round" /></svg>}
+                <div style={{ position: "absolute", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 2, boxSizing: "border-box", ...(u.plan.shape === "L" ? L_BAND[u.plan.rot || 0] : { inset: 0 }) }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.1 }}>{label}</div>
+                  <div style={{ fontSize: 10, opacity: 0.75 }}>{u.roofType ? `${u.roofType} · ` : ""}{r.w}×{r.h} ft</div>
+                </div>
                 {done && <svg width="14" height="14" viewBox="0 0 16 16" style={{ position: "absolute", right: 3, bottom: 3 }}><path d="M2 8.5 l4 4 l8 -9" fill="none" stroke={DONE_OK} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                 {tk && <span style={{ position: "absolute", left: 3, bottom: 3, minWidth: 14, height: 14, borderRadius: 7, background: tk.urgent ? "#ef5350" : PK, color: "#000", fontSize: 9, lineHeight: "14px", textAlign: "center" }}>{tk.open}</span>}
                 {arrange && <div onPointerDown={e => startDrag(e, u, "size")} onPointerMove={onMove} onPointerUp={onUp} style={{ position: "absolute", right: 0, bottom: 0, width: 16, height: 16, cursor: "nwse-resize", background: "linear-gradient(135deg, transparent 50%, #FFFFFFcc 50%)" }} />}
