@@ -776,7 +776,9 @@ const UnitGrid = ({ units, onSelect, selectedId, tradeFilter, commonAreas, setCo
   );
 };
 // ▸ Unit Detail Modal
-const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicketChange, onNewTicket, isHouse, onDeleteRoom }) => {
+const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicketChange, onNewTicket, isHouse, onDeleteRoom, levelsList = [], aptList = [] }) => {
+  const [editingC, setEditingC] = useState(null);
+  const [editText, setEditText] = useState("");
   useEffect(() => {
     const h = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", h);
@@ -877,7 +879,7 @@ const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicke
         </div>
 
         <div style={{ display: "flex", gap: 4, marginBottom: 16, borderBottom: `1px solid ${BD}`, paddingBottom: 8, flexWrap: "wrap" }}>
-          {["overview","tickets","info","trades","comments","photos","notices"].map(t => (
+          {["overview","tickets","info","trades","comments","photos","notices","edit"].map(t => (
             <button key={t} style={S.tab(tab === t)} onClick={() => setTab(t)}>{t === "info" ? "Contact" : t === "tickets" ? `Tickets${myTickets.length ? ` (${openTickets.length})` : ""}` : t.charAt(0).toUpperCase() + t.slice(1)}</button>
           ))}
         </div>
@@ -969,7 +971,7 @@ const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicke
                 <span style={{ fontSize: 13 }}>Unit is Vacant</span>
               </label>
             </div>
-            {isHouse && onDeleteRoom && <button style={{ ...S.btn("danger"), marginTop: 14, fontSize: 13, padding: "8px 14px" }} onClick={() => { if (confirm(`Remove "${unit.unit}" and everything recorded in it (notes, photos, trade status)?`)) onDeleteRoom(unit.id); }}>Remove this room</button>}
+
           </div>
         )}
 
@@ -1005,6 +1007,39 @@ const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicke
           </div>
         )}
 
+        {tab === "edit" && (
+          <div>
+            <div style={S.cardTitle}>{isHouse ? "Edit room" : "Edit unit"}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div><label style={S.label}>{isHouse ? "Room name" : "Unit number"}</label><input style={S.input} value={unit.unit} onChange={e => onUpdate({ ...unit, unit: e.target.value })} /></div>
+              {isHouse ? (
+                <div><label style={S.label}>Level</label>
+                  <select style={S.input} value={unit.floor} onChange={e => { const lv = levelsList.find(l => l.floor === +e.target.value); if (lv) onUpdate({ ...unit, floor: lv.floor, level: lv.label, plan: null }); }}>
+                    {levelsList.map(l => <option key={l.floor} value={l.floor}>{l.label}</option>)}
+                  </select>
+                </div>
+              ) : (
+                <div><label style={S.label}>Floor</label><input style={S.input} type="number" value={unit.floor} onChange={e => onUpdate({ ...unit, floor: +e.target.value || 1 })} /></div>
+              )}
+              {isHouse && aptList.length > 0 && (
+                <div><label style={S.label}>Apartment</label>
+                  <select style={S.input} value={unit.apt || ""} onChange={e => { const na = e.target.value, base = unit.apt && unit.unit.startsWith(unit.apt + " ") ? unit.unit.slice(unit.apt.length + 1) : unit.unit; onUpdate({ ...unit, apt: na, unit: na ? `${na} ${base}` : base }); }}>
+                    <option value="">Shared (not in an apartment)</option>
+                    {aptList.map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                <input type="checkbox" checked={unit.vacant} onChange={e => onUpdate({ ...unit, vacant: e.target.checked })} />
+                <span style={{ fontSize: 13 }}>{isHouse ? "Room is vacant" : "Unit is vacant"}</span>
+              </label>
+            </div>
+            {onDeleteRoom && <button style={{ ...S.btn("danger"), marginTop: 18 }} onClick={() => { if (confirm(`Delete "${unit.unit}" and everything recorded in it (notes, photos, trade status)? This cannot be undone.`)) onDeleteRoom(unit.id); }}><Icon n="trash" /> Delete {isHouse ? "this room" : "this unit"}</button>}
+          </div>
+        )}
+
         {tab === "comments" && (
           <div>
             <div style={{ marginBottom: 12 }}>
@@ -1021,7 +1056,19 @@ const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicke
               {unit.comments.map((c, i) => (
                 <div key={i} style={{ ...S.card, padding: 10 }}>
                   <div style={{ fontSize: 10, color: TXT2, marginBottom: 4, fontFamily: font }}>{formatDate(c.date)} • {c.type === "voice" ? <><Icon n="mic" /> Voice</> : <><Icon n="chat" /> Text</>}</div>
-                  <div style={{ fontSize: 13 }}>{c.text}</div>
+                  {editingC === i ? (<>
+                    <textarea style={S.textarea} value={editText} onChange={e => setEditText(e.target.value)} />
+                    <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                      <button style={{ ...S.btn("primary"), padding: "6px 12px", fontSize: 12 }} onClick={() => { onUpdate({ ...unit, comments: unit.comments.map((x, j) => j === i ? { ...x, text: editText } : x) }); setEditingC(null); }}>Save</button>
+                      <button style={{ ...S.btn(), padding: "6px 12px", fontSize: 12 }} onClick={() => setEditingC(null)}>Cancel</button>
+                    </div>
+                  </>) : (<>
+                    <div style={{ fontSize: 13 }}>{c.text}</div>
+                    <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                      <button style={{ ...S.btn(), padding: "4px 10px", fontSize: 11 }} onClick={() => { setEditingC(i); setEditText(c.text); }}><Icon n="pencil" /> Edit</button>
+                      <button style={{ ...S.btn("danger"), padding: "4px 10px", fontSize: 11 }} onClick={() => { if (confirm("Delete this comment?")) onUpdate({ ...unit, comments: unit.comments.filter((_, j) => j !== i) }); }}><Icon n="trash" /></button>
+                    </div>
+                  </>)}
                 </div>
               ))}
             </div>
@@ -1104,6 +1151,7 @@ const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicke
                 <div key={n.id} style={{ ...S.card, padding: 10 }}>
                   <div style={{ fontSize: 10, color: TXT2, fontFamily: font }}>{formatDate(n.date)} • {n.method}</div>
                   <div style={{ fontSize: 13 }}>{n.text}</div>
+                  <button style={{ ...S.btn("danger"), padding: "4px 10px", fontSize: 11, marginTop: 6 }} onClick={() => { if (confirm("Delete this notice from the history?")) onUpdate({ ...unit, notices: unit.notices.filter(x => x.id !== n.id) }); }}><Icon n="trash" /> Delete</button>
                 </div>
               ))}
             </div>
@@ -2083,9 +2131,9 @@ const groupsOf = (rooms) => {
 };
 const PX = 18; // pixels per foot on the floor plan
 const APT_COLORS = ["#FFAA33", "#0A84FF", "#66bb6a", "#ef5350"];
-const aptColor = (apt) => { const n = parseInt((apt || "").replace(/\D/g, ""), 10); return n ? APT_COLORS[(n - 1) % APT_COLORS.length] : "#3b4a63"; };
+const aptColor = (apt, list = []) => { const i = list.indexOf(apt); return i >= 0 ? APT_COLORS[i % APT_COLORS.length] : apt ? "#8b95a7" : "#3b4a63"; };
 const rectsOverlap = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, tradeFilter, ticketInfo }) => {
+const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLevel, aptList = [], tradeFilter, ticketInfo }) => {
   const floors = Object.keys(levels).map(Number).sort((a, b) => b - a);
   const [floor, setFloor] = useState(() => floors.includes(1) ? 1 : floors[0]);
   const [arrange, setArrange] = useState(false);
@@ -2128,6 +2176,7 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, tradeFilte
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
         <button style={{ ...S.btn(arrange ? "primary" : undefined), padding: "8px 14px", fontSize: 13 }} onClick={() => { setArrange(a => !a); setSelId(null); }}>{arrange ? "Done arranging" : "Arrange rooms"}</button>
         <button style={{ ...S.btn(), padding: "8px 14px", fontSize: 13 }} onClick={() => onAddRoomClick(cur, levels[cur].label)}>+ Room</button>
+        <button style={{ ...S.btn(), padding: "8px 14px", fontSize: 13 }} onClick={() => onEditLevel(cur, levels[cur].label)}><Icon n="pencil" /> Edit {levels[cur].label}</button>
         <span style={{ fontSize: 12, color: TXT2 }}>{arrange ? "Drag a room to move it, drag its corner to resize. 1 square = 1 ft." : "Tap a room to open it. 1 square = 1 ft."}</span>
       </div>
       {arrange && unplaced.length > 0 && (
@@ -2160,7 +2209,7 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, tradeFilte
                 onClick={() => { if (!arrange) onSelect(u); }}
                 style={{ position: "absolute", left: r.x * PX, top: r.y * PX, width: r.w * PX, height: r.h * PX, boxSizing: "border-box", borderRadius: 4,
                   background: done ? DONE_BG : dim ? "#1b2433" : color, opacity: dim && !done ? 0.6 : 1,
-                  border: `3px solid ${isDrag && bad ? "#ef5350" : selId === u.id && arrange ? "#FFF" : aptColor(u.apt)}`,
+                  border: `3px solid ${isDrag && bad ? "#ef5350" : selId === u.id && arrange ? "#FFF" : aptColor(u.apt, aptList)}`,
                   color: done ? DONE_TXT : dim ? "#7b8aa3" : (color === "#FFFFFF" || color === "#F1C40F" ? "#000" : "#FFF"),
                   display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", overflow: "hidden", padding: 2,
                   cursor: arrange ? "move" : "pointer", userSelect: "none", fontFamily: font, zIndex: isDrag ? 5 : 1 }}>
@@ -2174,12 +2223,12 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, tradeFilte
           })}
         </div>
       </div>
-      {rooms.some(u => u.apt) && <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8, fontSize: 12, color: TXT2 }}>{[...new Set(rooms.map(u => u.apt).filter(Boolean))].sort().map(a => <span key={a}><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, border: `2px solid ${aptColor(a)}`, marginRight: 4 }} />{a}</span>)}</div>}
+      {rooms.some(u => u.apt) && <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8, fontSize: 12, color: TXT2 }}>{[...new Set(rooms.map(u => u.apt).filter(Boolean))].sort().map(a => <span key={a}><span style={{ display: "inline-block", width: 10, height: 10, borderRadius: 2, border: `2px solid ${aptColor(a, aptList)}`, marginRight: 4 }} />{a}</span>)}</div>}
     </div>
   );
 };
-const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddRoom, onPlan, levelsDef = [], onAddLevel, families = 1 }) => {
-  const aptNames = families > 1 ? Array.from({ length: families }, (_, i) => "Apt " + (i + 1)) : [];
+const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddRoom, onPlan, levelsDef = [], onAddLevel, aptList = [], onRenameLevel, onDeleteLevel, onAddApt, onRenameApt, onDeleteApt }) => {
+  const aptNames = aptList;
   const multi = aptNames.length > 0 || units.some(u => u.apt);
   const levels = {};
   levelsDef.forEach(l => { levels[l.floor] = { label: l.label, rooms: [] }; });
@@ -2190,11 +2239,14 @@ const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddR
   const [name, setName] = useState("");
   const [apt, setApt] = useState("");
   const [added, setAdded] = useState([]);
+  const [lvName, setLvName] = useState("");
+  const [aptDraft, setAptDraft] = useState({});
   const [kind, setKind] = useState("Gutter");
   const [loc, setLoc] = useState("");
   const [view, setViewState] = useState(() => { try { return localStorage.getItem("bt_houseview") || "stack"; } catch (e) { return "stack"; } });
   const setView = (v) => { setViewState(v); try { localStorage.setItem("bt_houseview", v); } catch (e) {} };
-  const closeDlg = () => { setDlg(null); setName(""); setAdded([]); };
+  const closeDlg = () => { setDlg(null); setName(""); setAdded([]); setAptDraft({}); };
+  const openEditLevel = (floor, label) => { setLvName(label); setDlg({ kind: "editlevel", floor, label }); };
   const isExt = dlg?.kind === "room" && dlg.label === "Exterior";
   const addNow = () => {
     const n = isExt ? `${loc.trim()} ${kind === "Other" ? name.trim() : kind}`.trim() : name.trim();
@@ -2209,8 +2261,9 @@ const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddR
     <div style={{ display: "flex", flexDirection: "column", gap: 0, maxWidth: view === "plan" ? 1100 : 900, margin: "0 auto" }}>
       <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 12 }}>
         {[["stack", "Levels"], ["plan", "Floor plan"]].map(([k, l]) => <button key={k} style={{ ...S.btn(view === k ? "primary" : undefined), padding: "8px 16px", fontSize: 13 }} onClick={() => setView(k)}>{l}</button>)}
+        <button style={{ ...S.btn(), padding: "8px 16px", fontSize: 13 }} onClick={() => setDlg({ kind: "apts" })}><Icon n="pencil" /> Apartments{aptList.length ? ` (${aptList.length})` : ""}</button>
       </div>
-      {view === "plan" && <FloorPlan units={units} levels={levels} onSelect={onSelect} onPlan={onPlan} tradeFilter={tradeFilter} ticketInfo={ticketInfo} onAddRoomClick={(floor, label) => { setApt(""); setDlg({ kind: "room", floor, label }); }} />}
+      {view === "plan" && <FloorPlan units={units} levels={levels} onSelect={onSelect} onPlan={onPlan} tradeFilter={tradeFilter} ticketInfo={ticketInfo} onAddRoomClick={(floor, label) => { setApt(""); setDlg({ kind: "room", floor, label }); }} onEditLevel={openEditLevel} aptList={aptList} />}
       {view !== "plan" && <>
       <div style={{ clipPath: "polygon(8% 100%, 50% 0, 92% 100%)", background: "#2a3446", height: 46, margin: "0 auto", width: "70%", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 6, color: "#B4BCC8", fontSize: 11, fontWeight: 700, letterSpacing: 2 }}>ROOF</div>
       <div style={{ border: `2px solid ${OL}`, borderRadius: 6, background: "#0b1220", overflow: "hidden" }}>
@@ -2220,7 +2273,7 @@ const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddR
           const groups = groupsOf(lv.rooms);
           return (
             <div key={f} style={{ display: "flex", borderTop: i ? `1px solid ${OL}` : "none", minHeight: 84 }}>
-              <div style={{ width: 92, flexShrink: 0, background: "#11182780", borderRight: `1px solid ${OL}`, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 6, fontFamily: font, fontSize: 12, fontWeight: 700, color: "#9ec1ff" }}>{lv.label}</div>
+              <div style={{ width: 92, flexShrink: 0, background: "#11182780", borderRight: `1px solid ${OL}`, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 6, fontFamily: font, fontSize: 12, fontWeight: 700, color: "#9ec1ff", flexDirection: "column", gap: 4 }}>{lv.label}<button title="Rename or delete this level" style={{ background: "none", border: "none", color: TXT2, cursor: "pointer", fontSize: 11, padding: 0 }} onClick={() => openEditLevel(f, lv.label)}><Icon n="pencil" /> edit</button></div>
               <div style={{ flex: 1, display: "flex", flexWrap: "wrap", gap: multi ? 14 : 8, padding: 10, alignItems: "stretch" }}>
                 {groups.map(g => (
                   <div key={g.apt || "_shared"} style={multi ? { display: "flex", flexDirection: "column", gap: 6, flex: g.apt ? "1 1 320px" : "0 1 auto" } : { display: "contents" }}>
@@ -2259,7 +2312,32 @@ const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddR
       {dlg && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={closeDlg}>
           <div style={{ ...S.card, width: 420, maxWidth: "100%", marginBottom: 0 }} onClick={e => e.stopPropagation()}>
-            {dlg.kind === "level" ? (<>
+            {dlg.kind === "editlevel" ? (<>
+              <div style={S.cardTitle}>Edit level</div>
+              <label style={S.label}>Level name</label>
+              <input style={S.input} autoFocus value={lvName} onChange={e => setLvName(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && lvName.trim()) { onRenameLevel(dlg.floor, lvName.trim()); closeDlg(); } }} />
+              <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
+                <button style={S.btn("primary")} disabled={!lvName.trim()} onClick={() => { onRenameLevel(dlg.floor, lvName.trim()); closeDlg(); }}>Save</button>
+                <button style={S.btn()} onClick={closeDlg}>Cancel</button>
+                <button style={{ ...S.btn("danger"), marginLeft: "auto" }} onClick={() => { if (onDeleteLevel(dlg.floor, dlg.label)) closeDlg(); }}>Delete level</button>
+              </div>
+            </>) : dlg.kind === "apts" ? (<>
+              <div style={S.cardTitle}>Apartments</div>
+              {aptList.length === 0 && <div style={{ fontSize: 13, color: TXT2, marginBottom: 10 }}>This house has no apartments yet. Add one to split rooms by apartment.</div>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+                {aptList.map(a => (
+                  <div key={a} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span style={{ width: 10, height: 10, borderRadius: 2, border: `2px solid ${aptColor(a, aptList)}`, flexShrink: 0 }} />
+                    <input style={S.input} value={aptDraft[a] ?? a} onChange={e => setAptDraft({ ...aptDraft, [a]: e.target.value })} onBlur={() => { const v = (aptDraft[a] ?? a).trim(); if (v && v !== a && !aptList.includes(v)) onRenameApt(a, v); setAptDraft(d => { const n = { ...d }; delete n[a]; return n; }); }} />
+                    <button style={{ ...S.btn("danger"), padding: "8px 12px", fontSize: 12 }} onClick={() => onDeleteApt(a)}><Icon n="trash" /></button>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button style={S.btn("primary")} onClick={onAddApt}>+ Add apartment</button>
+                <button style={S.btn()} onClick={closeDlg}>Done</button>
+              </div>
+            </>) : dlg.kind === "level" ? (<>
               <div style={S.cardTitle}>Add a level</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {levelChoices.map(c => <button key={c.floor} style={S.btn()} onClick={() => { onAddLevel(c.floor, c.label); closeDlg(); }}>{c.label}</button>)}
@@ -2436,7 +2514,7 @@ const PropertiesView = ({ list, activeId, live, summaries, onOpen, onAdd, onDele
 // ─── MAIN APP ───────────────────────────────────────────────────────────────
 function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwitch, onAddProp, onDeleteProp, onEditProp }) {
   const propType = saved?.propType || "multifamily";
-  const families = saved?.families || 1;
+  const [aptList, setAptList] = useState(() => saved?.aptList || ((saved?.families || 1) > 1 ? Array.from({ length: saved.families }, (_, i) => "Apt " + (i + 1)) : []));
   const [houseLevels, setHouseLevels] = useState(saved?.houseLevels || []);
   const isHouse = propType === "house";
   const [unitFormat, setUnitFormat] = useState(saved?.unitFormat || "alpha");
@@ -2487,11 +2565,32 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
 
   const progress = Object.fromEntries(TRADES.map(t => [t, calcProgress(units, t)]));
 
-  const snapshot = () => ({ units, schedule, commonAreas, areaList, showAreas, enabledItems, elevatorFloors, elevatorStuck, projectName, unitFormat, floorCount, perFloor, events, demoMode, tickets, propType, families, houseLevels });
+  const snapshot = () => ({ units, schedule, commonAreas, areaList, showAreas, enabledItems, elevatorFloors, elevatorStuck, projectName, unitFormat, floorCount, perFloor, events, demoMode, tickets, propType, families: aptList.length || 1, aptList, houseLevels });
 
   const addRoom = (floor, level, apt, name) => {
     if (!name) return;
     setUnits(prev => [...prev, blankUnit(prev.reduce((m, u) => Math.max(m, u.id), 0) + 1, apt ? `${apt} ${name}` : name, floor, level, apt)]);
+  };
+  const levelsList = (() => { const m = new Map(); houseLevels.forEach(l => m.set(l.floor, l.label)); units.forEach(u => { if (!m.has(u.floor)) m.set(u.floor, u.level || ("Level " + u.floor)); }); return [...m.entries()].map(([floor, label]) => ({ floor, label })).sort((a, b) => b.floor - a.floor); })();
+  const renameLevel = (floor, label) => {
+    setHouseLevels(ls => ls.some(l => l.floor === floor) ? ls.map(l => l.floor === floor ? { ...l, label } : l) : [...ls, { floor, label }]);
+    setUnits(prev => prev.map(u => u.floor === floor ? { ...u, level: label } : u));
+  };
+  const deleteLevel = (floor, label) => {
+    const n = units.filter(u => u.floor === floor).length;
+    if (!confirm(n ? `Delete "${label}" and its ${n} room${n > 1 ? "s" : ""}, including everything recorded in them? This cannot be undone.` : `Delete the empty level "${label}"?`)) return false;
+    setHouseLevels(ls => ls.filter(l => l.floor !== floor)); setUnits(prev => prev.filter(u => u.floor !== floor)); setSelectedUnit(null);
+    return true;
+  };
+  const addApt = () => setAptList(l => { let n = l.length + 1; while (l.includes("Apt " + n)) n++; return [...l, "Apt " + n]; });
+  const renameApt = (old, nu) => {
+    setAptList(l => l.map(a => a === old ? nu : a));
+    setUnits(prev => prev.map(u => u.apt !== old ? u : { ...u, apt: nu, unit: u.unit.startsWith(old + " ") ? nu + u.unit.slice(old.length) : u.unit }));
+  };
+  const deleteApt = (name) => {
+    const n = units.filter(u => u.apt === name).length;
+    if (!confirm(n ? `Delete "${name}" and its ${n} room${n > 1 ? "s" : ""}, including everything recorded in them? This cannot be undone.` : `Delete "${name}"?`)) return;
+    setAptList(l => l.filter(a => a !== name)); setUnits(prev => prev.filter(u => u.apt !== name)); setSelectedUnit(null);
   };
   const updatePlan = (id, plan) => setUnits(prev => prev.map(u => u.id === id ? { ...u, plan: plan || null } : u));
   const addLevel = (floor, label) => setHouseLevels(ls => ls.some(l => l.floor === floor) ? ls : [...ls, { floor, label }]);
@@ -2507,6 +2606,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
   };
   const liveSummary = { ...summarize({ units, tickets, demoMode, propType }), name: projectName };
   useEffect(() => { onEditProp(activeId, { name: projectName }); }, [projectName]);
+  useEffect(() => { if (propType === "house") onEditProp(activeId, { families: aptList.length || 1 }); }, [aptList.length]);
 
   // Auto-save (debounced) so a refresh never wipes the project.
   useEffect(() => {
@@ -2574,7 +2674,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
     setUnits(fixUnits(s.units)); setSchedule(fixSchedule(s.schedule)); setCommonAreas(fixAreaKeys(s.commonAreas));
     setAreaList(fixAreaList(s.areaList)); setShowAreas(s.showAreas || { elev: true, roof: true, base: true, grnd: true });
     setEnabledItems(fixAreaKeys(s.enabledItems)); setElevatorFloors(s.elevatorFloors || {}); setElevatorStuck(s.elevatorStuck || {});
-    setHouseLevels(s.houseLevels || []); setEvents(s.events || []); setTickets(s.tickets || []); setProjectName(s.projectName || DEFAULT_PROJECT); setSelectedUnit(null);
+    setHouseLevels(s.houseLevels || []); setAptList(s.aptList || ((s.families || 1) > 1 ? Array.from({ length: s.families }, (_, i) => "Apt " + (i + 1)) : [])); setEvents(s.events || []); setTickets(s.tickets || []); setProjectName(s.projectName || DEFAULT_PROJECT); setSelectedUnit(null);
   };
 
   const exportBackup = () => downloadFile(
@@ -2933,7 +3033,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
             <div style={S.card}>
               <div style={S.cardTitle}>{isHouse ? "House Map" : "Unit Map"}</div>
               <Legend />
-              <UnitMap isHouse={isHouse} onPlan={updatePlan} onAddRoom={addRoom} levelsDef={houseLevels} onAddLevel={addLevel} families={families} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
+              <UnitMap isHouse={isHouse} onPlan={updatePlan} onAddRoom={addRoom} levelsDef={houseLevels} onAddLevel={addLevel} aptList={aptList} onRenameLevel={renameLevel} onDeleteLevel={deleteLevel} onAddApt={addApt} onRenameApt={renameApt} onDeleteApt={deleteApt} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
             </div>
 
             <TicketsPanel tickets={tickets} connected={!!ticketCfg.url} onOpen={() => setPage("tickets")} />
@@ -2991,7 +3091,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
                   </button>
                 </div>
               )}
-              <UnitMap isHouse={isHouse} onPlan={updatePlan} onAddRoom={addRoom} levelsDef={houseLevels} onAddLevel={addLevel} families={families} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
+              <UnitMap isHouse={isHouse} onPlan={updatePlan} onAddRoom={addRoom} levelsDef={houseLevels} onAddLevel={addLevel} aptList={aptList} onRenameLevel={renameLevel} onDeleteLevel={deleteLevel} onAddApt={addApt} onRenameApt={renameApt} onDeleteApt={deleteApt} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
             </div>
           </div>
         )}
@@ -3005,7 +3105,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
         </div>
       </div>
 
-      {selectedUnit && <UnitModal isHouse={isHouse} onDeleteRoom={deleteRoom} unit={selectedUnit} onClose={() => setSelectedUnit(null)} onUpdate={updateUnit} projectName={projectName} tickets={tickets} onTicketChange={updateTicket} onNewTicket={(label) => { setSelectedUnit(null); setPage("tickets"); setTicketPrefill(label); }} />}
+      {selectedUnit && <UnitModal isHouse={isHouse} onDeleteRoom={deleteRoom} levelsList={levelsList} aptList={aptList} unit={selectedUnit} onClose={() => setSelectedUnit(null)} onUpdate={updateUnit} projectName={projectName} tickets={tickets} onTicketChange={updateTicket} onNewTicket={(label) => { setSelectedUnit(null); setPage("tickets"); setTicketPrefill(label); }} />}
     </div>
   );
 }
@@ -3061,7 +3161,7 @@ function Root() {
     const house = form.type === "house";
     const st = {
       units: house ? [] : generateUnits(form.floors, form.perFloor, form.format, false), schedule: generateSchedule(false),
-      commonAreas: {}, events: [], elevatorFloors: {}, elevatorStuck: {}, tickets: [], demoMode: false, propType: house ? "house" : "multifamily", families: house ? (form.families || 1) : 1, ...(house ? { houseLevels: buildLevels(form) } : {}),
+      commonAreas: {}, events: [], elevatorFloors: {}, elevatorStuck: {}, tickets: [], demoMode: false, propType: house ? "house" : "multifamily", families: house ? (form.families || 1) : 1, ...(house ? { houseLevels: buildLevels(form), aptList: (form.families || 1) > 1 ? Array.from({ length: form.families }, (_, i) => "Apt " + (i + 1)) : [] } : {}),
       projectName: form.name, unitFormat: form.format, floorCount: house ? form.stories : form.floors, perFloor: house ? 0 : form.perFloor, savedAt: Date.now(),
       ...(house ? { areaList: DEFAULT_COMMON_AREAS.filter(a => a.id !== "elev"), showAreas: { elev: false, roof: true, base: true, grnd: true } } : {}),
     };
