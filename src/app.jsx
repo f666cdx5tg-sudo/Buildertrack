@@ -1021,6 +1021,13 @@ const UnitModal = ({ unit, onClose, onUpdate, projectName, tickets = [], onTicke
               ) : (
                 <div><label style={S.label}>Floor</label><input style={S.input} type="number" value={unit.floor} onChange={e => onUpdate({ ...unit, floor: +e.target.value || 1 })} /></div>
               )}
+              {isHouse && unit.floor === 100 && !/chimney/i.test(unit.unit) && (
+                <div><label style={S.label}>Roof type</label>
+                  <select style={S.input} value={unit.roofType || ""} onChange={e => onUpdate({ ...unit, roofType: e.target.value })}>
+                    <option value="">Not set</option><option value="Flat">Flat</option><option value="Pitched">Pitched</option>
+                  </select>
+                </div>
+              )}
               {isHouse && aptList.length > 0 && (
                 <div><label style={S.label}>Apartment</label>
                   <select style={S.input} value={unit.apt || ""} onChange={e => { const na = e.target.value, base = unit.apt && unit.unit.startsWith(unit.apt + " ") ? unit.unit.slice(unit.apt.length + 1) : unit.unit; onUpdate({ ...unit, apt: na, unit: na ? `${na} ${base}` : base }); }}>
@@ -2130,16 +2137,17 @@ const groupsOf = (rooms) => {
   return [...m.entries()].sort((a, b) => (a[0] === "") - (b[0] === "") || a[0].localeCompare(b[0], undefined, { numeric: true })).map(([apt, rs]) => ({ apt, rooms: rs }));
 };
 const PX = 18; // pixels per foot on the floor plan
+// Starting size (ft) when a room is first dropped on the plan; you can change it afterwards.
+const defaultSize = (name = "") => /door/i.test(name) ? [4, 2] : /stair/i.test(name) ? [4, 10] : /chimney/i.test(name) ? [4, 4] : /foyer/i.test(name) ? [8, 8] : /driveway/i.test(name) ? [12, 30] : /backyard|yard/i.test(name) ? [30, 20] : /gutter|downspout/i.test(name) ? [20, 2] : [10, 10];
 const APT_COLORS = ["#FFAA33", "#0A84FF", "#66bb6a", "#ef5350"];
 const aptColor = (apt, list = []) => { const i = list.indexOf(apt); return i >= 0 ? APT_COLORS[i % APT_COLORS.length] : apt ? "#8b95a7" : "#3b4a63"; };
 const rectsOverlap = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLevel, aptList = [], tradeFilter, ticketInfo }) => {
+const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLevel, aptList = [], tradeFilter, ticketInfo, floor, setFloor }) => {
   const floors = Object.keys(levels).map(Number).sort((a, b) => b - a);
-  const [floor, setFloor] = useState(() => floors.includes(1) ? 1 : floors[0]);
-  const [arrange, setArrange] = useState(false);
+  const [arrange, setArrange] = useState(true);
   const [selId, setSelId] = useState(null);
   const [drag, setDrag] = useState(null);
-  const cur = floors.includes(floor) ? floor : floors[0];
+  const cur = floors.includes(floor) ? floor : (floors.includes(1) ? 1 : floors[0]);
   if (cur === undefined) return <div style={{ padding: 24, textAlign: "center", color: TXT2, fontSize: 13 }}>Add a level first, then add rooms and arrange them here.</div>;
   const rooms = units.filter(u => u.floor === cur);
   const placed = rooms.filter(u => u.plan), unplaced = rooms.filter(u => !u.plan);
@@ -2158,15 +2166,15 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
   const onMove = (e) => {
     if (!drag) return;
     const dx = Math.round((e.clientX - drag.sx) / PX), dy = Math.round((e.clientY - drag.sy) / PX), o = drag.orig;
-    setDrag({ ...drag, cur: drag.mode === "move" ? { ...o, x: Math.max(0, o.x + dx), y: Math.max(0, o.y + dy) } : { ...o, w: Math.max(3, o.w + dx), h: Math.max(3, o.h + dy) } });
+    setDrag({ ...drag, cur: drag.mode === "move" ? { ...o, x: Math.max(0, o.x + dx), y: Math.max(0, o.y + dy) } : { ...o, w: Math.max(1, o.w + dx), h: Math.max(1, o.h + dy) } });
   };
   const onUp = () => { if (!drag) return; if (!bad) onPlan(drag.id, drag.cur); setDrag(null); };
   const sel = arrange ? rooms.find(u => u.id === selId && u.plan) : null;
   const OL = "#3b4a63";
   const numIn = (label, key) => (
     <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: TXT2 }}>{label}
-      <input type="number" style={{ ...S.input, width: 64, padding: "6px 8px" }} value={sel.plan[key]} min={key === "w" || key === "h" ? 3 : 0}
-        onChange={e => { const v = Math.max(key === "w" || key === "h" ? 3 : 0, +e.target.value || 0); const np = { ...sel.plan, [key]: v }; if (!placed.some(o => o.id !== sel.id && rectsOverlap(np, o.plan))) onPlan(sel.id, np); }} />
+      <input type="number" style={{ ...S.input, width: 64, padding: "6px 8px" }} value={sel.plan[key]} min={key === "w" || key === "h" ? 1 : 0}
+        onChange={e => { const v = Math.max(key === "w" || key === "h" ? 1 : 0, +e.target.value || 0); const np = { ...sel.plan, [key]: v }; if (!placed.some(o => o.id !== sel.id && rectsOverlap(np, o.plan))) onPlan(sel.id, np); }} />
     </label>);
   return (
     <div>
@@ -2174,15 +2182,15 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
         {floors.map(f => <button key={f} style={{ ...S.btn(f === cur ? "primary" : undefined), padding: "8px 14px", fontSize: 13 }} onClick={() => { setFloor(f); setSelId(null); }}>{levels[f].label}</button>)}
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
-        <button style={{ ...S.btn(arrange ? "primary" : undefined), padding: "8px 14px", fontSize: 13 }} onClick={() => { setArrange(a => !a); setSelId(null); }}>{arrange ? "Done arranging" : "Arrange rooms"}</button>
+        <button style={{ ...S.btn(arrange ? "primary" : undefined), padding: "8px 14px", fontSize: 13 }} onClick={() => { setArrange(a => !a); setSelId(null); }}>{arrange ? "Lock layout" : "Arrange rooms"}</button>
         <button style={{ ...S.btn(), padding: "8px 14px", fontSize: 13 }} onClick={() => onAddRoomClick(cur, levels[cur].label)}>+ Room</button>
         <button style={{ ...S.btn(), padding: "8px 14px", fontSize: 13 }} onClick={() => onEditLevel(cur, levels[cur].label)}><Icon n="pencil" /> Edit {levels[cur].label}</button>
-        <span style={{ fontSize: 12, color: TXT2 }}>{arrange ? "Drag a room to move it, drag its corner to resize. 1 square = 1 ft." : "Tap a room to open it. 1 square = 1 ft."}</span>
+        <span style={{ fontSize: 12, color: TXT2 }}>{arrange ? "Drag a room to move it, drag its corner to resize, double-click to open it. 1 square = 1 ft." : "Layout locked. Tap a room to open it. Tap Arrange rooms to move things. 1 square = 1 ft."}</span>
       </div>
       {arrange && unplaced.length > 0 && (
         <div style={{ ...S.card, padding: 10, marginBottom: 10 }}>
           <div style={{ fontSize: 12, color: TXT2, marginBottom: 6 }}>Not on the plan yet — tap to place, then drag it where it goes:</div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{unplaced.map(u => <button key={u.id} style={{ ...S.btn(), padding: "6px 10px", fontSize: 12 }} onClick={() => { onPlan(u.id, freeSpot(10, 10)); setSelId(u.id); }}>+ {u.unit}</button>)}</div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{unplaced.map(u => <button key={u.id} style={{ ...S.btn(), padding: "6px 10px", fontSize: 12 }} onClick={() => { onPlan(u.id, freeSpot(...defaultSize(u.unit))); setSelId(u.id); }}>+ {u.unit}</button>)}</div>
         </div>
       )}
       {!arrange && unplaced.length > 0 && <div style={{ fontSize: 12, color: PK, marginBottom: 8 }}>{unplaced.length} room{unplaced.length > 1 ? "s" : ""} not placed yet: {unplaced.map(u => u.unit).join(", ")}. Tap Arrange rooms to place them.</div>}
@@ -2206,7 +2214,7 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
             return (
               <div key={u.id}
                 onPointerDown={e => startDrag(e, u, "move")} onPointerMove={onMove} onPointerUp={onUp}
-                onClick={() => { if (!arrange) onSelect(u); }}
+                onClick={() => { if (!arrange) onSelect(u); }} onDoubleClick={() => onSelect(u)}
                 style={{ position: "absolute", left: r.x * PX, top: r.y * PX, width: r.w * PX, height: r.h * PX, boxSizing: "border-box", borderRadius: 4,
                   background: done ? DONE_BG : dim ? "#1b2433" : color, opacity: dim && !done ? 0.6 : 1,
                   border: `3px solid ${isDrag && bad ? "#ef5350" : selId === u.id && arrange ? "#FFF" : aptColor(u.apt, aptList)}`,
@@ -2214,7 +2222,7 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
                   display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", overflow: "hidden", padding: 2,
                   cursor: arrange ? "move" : "pointer", userSelect: "none", fontFamily: font, zIndex: isDrag ? 5 : 1 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.1 }}>{label}</div>
-                <div style={{ fontSize: 10, opacity: 0.75 }}>{r.w}×{r.h} ft</div>
+                <div style={{ fontSize: 10, opacity: 0.75 }}>{u.roofType ? `${u.roofType} · ` : ""}{r.w}×{r.h} ft</div>
                 {done && <svg width="14" height="14" viewBox="0 0 16 16" style={{ position: "absolute", right: 3, bottom: 3 }}><path d="M2 8.5 l4 4 l8 -9" fill="none" stroke={DONE_OK} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                 {tk && <span style={{ position: "absolute", left: 3, bottom: 3, minWidth: 14, height: 14, borderRadius: 7, background: tk.urgent ? "#ef5350" : PK, color: "#000", fontSize: 9, lineHeight: "14px", textAlign: "center" }}>{tk.open}</span>}
                 {arrange && <div onPointerDown={e => startDrag(e, u, "size")} onPointerMove={onMove} onPointerUp={onUp} style={{ position: "absolute", right: 0, bottom: 0, width: 16, height: 16, cursor: "nwse-resize", background: "linear-gradient(135deg, transparent 50%, #FFFFFFcc 50%)" }} />}
@@ -2227,7 +2235,7 @@ const FloorPlan = ({ units, levels, onSelect, onPlan, onAddRoomClick, onEditLeve
     </div>
   );
 };
-const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddRoom, onPlan, levelsDef = [], onAddLevel, aptList = [], onRenameLevel, onDeleteLevel, onAddApt, onRenameApt, onDeleteApt }) => {
+const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddRoom, onPlan, onMoveRoom, levelsDef = [], onAddLevel, aptList = [], onRenameLevel, onDeleteLevel, onAddApt, onRenameApt, onDeleteApt }) => {
   const aptNames = aptList;
   const multi = aptNames.length > 0 || units.some(u => u.apt);
   const levels = {};
@@ -2241,17 +2249,28 @@ const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddR
   const [added, setAdded] = useState([]);
   const [lvName, setLvName] = useState("");
   const [aptDraft, setAptDraft] = useState({});
+  const [roofType, setRoofType] = useState("Pitched");
+  const [dragId, setDragId] = useState(null);
+  const [overKey, setOverKey] = useState(null);
+  const dropTo = (e, floor, level, apt, beforeId) => { e.preventDefault(); e.stopPropagation(); const id = dragId; setDragId(null); setOverKey(null); if (id != null && id !== beforeId) onMoveRoom(id, { floor, level, apt, beforeId }); };
+  const [planFloor, setPlanFloor] = useState(null);
   const [kind, setKind] = useState("Gutter");
   const [loc, setLoc] = useState("");
-  const [view, setViewState] = useState(() => { try { return localStorage.getItem("bt_houseview") || "stack"; } catch (e) { return "stack"; } });
+  const [view, setViewState] = useState(() => { try { return localStorage.getItem("bt_houseview") || "plan"; } catch (e) { return "plan"; } });
   const setView = (v) => { setViewState(v); try { localStorage.setItem("bt_houseview", v); } catch (e) {} };
+  useEffect(() => { try { if (sessionStorage.getItem("bt_openedit")) { sessionStorage.removeItem("bt_openedit"); setDlg({ kind: "prop" }); } } catch (e) {} }, []);
   const closeDlg = () => { setDlg(null); setName(""); setAdded([]); setAptDraft({}); };
   const openEditLevel = (floor, label) => { setLvName(label); setDlg({ kind: "editlevel", floor, label }); };
   const isExt = dlg?.kind === "room" && dlg.label === "Exterior";
+  const isRoof = dlg?.kind === "room" && dlg.label === "Roof";
+  const needsLoc = kind === "Gutter" || kind === "Downspout";
+  const extName = kind === "Other" ? name.trim() : needsLoc ? `${loc.trim()} ${kind}`.trim() : kind;
+  const extOk = kind === "Other" ? !!name.trim() : needsLoc ? !!loc.trim() : true;
+  const canAdd = isExt ? extOk : !!name.trim();
   const addNow = () => {
-    const n = isExt ? `${loc.trim()} ${kind === "Other" ? name.trim() : kind}`.trim() : name.trim();
-    if (isExt ? (!loc.trim() || (kind === "Other" && !name.trim())) : !n) return;
-    onAddRoom(dlg.floor, dlg.label, apt, n);
+    const n = isExt ? extName : name.trim();
+    if (!canAdd) return;
+    onAddRoom(dlg.floor, dlg.label, apt, n, isRoof && !/chimney/i.test(n) ? { roofType } : {});
     setAdded(a => [...a, (apt ? apt + " " : "") + n]); setName(""); if (isExt) setLoc("");
   };
   const topFloor = order.filter(f => f >= 1 && f < 99).reduce((m, f) => Math.max(m, f), 0);
@@ -2262,21 +2281,23 @@ const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddR
       <div style={{ display: "flex", gap: 6, justifyContent: "center", marginBottom: 12 }}>
         {[["stack", "Levels"], ["plan", "Floor plan"]].map(([k, l]) => <button key={k} style={{ ...S.btn(view === k ? "primary" : undefined), padding: "8px 16px", fontSize: 13 }} onClick={() => setView(k)}>{l}</button>)}
         <button style={{ ...S.btn(), padding: "8px 16px", fontSize: 13 }} onClick={() => setDlg({ kind: "apts" })}><Icon n="pencil" /> Apartments{aptList.length ? ` (${aptList.length})` : ""}</button>
+        <button style={{ ...S.btn(), padding: "8px 16px", fontSize: 13 }} onClick={() => setDlg({ kind: "prop" })}><Icon n="pencil" /> Edit property</button>
       </div>
-      {view === "plan" && <FloorPlan units={units} levels={levels} onSelect={onSelect} onPlan={onPlan} tradeFilter={tradeFilter} ticketInfo={ticketInfo} onAddRoomClick={(floor, label) => { setApt(""); setDlg({ kind: "room", floor, label }); }} onEditLevel={openEditLevel} aptList={aptList} />}
+      {view === "plan" && <FloorPlan units={units} levels={levels} onSelect={onSelect} onPlan={onPlan} tradeFilter={tradeFilter} ticketInfo={ticketInfo} onAddRoomClick={(floor, label) => { setApt(""); setDlg({ kind: "room", floor, label }); }} onEditLevel={openEditLevel} aptList={aptList} floor={planFloor} setFloor={setPlanFloor} />}
       {view !== "plan" && <>
       <div style={{ clipPath: "polygon(8% 100%, 50% 0, 92% 100%)", background: "#2a3446", height: 46, margin: "0 auto", width: "70%", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 6, color: "#B4BCC8", fontSize: 11, fontWeight: 700, letterSpacing: 2 }}>ROOF</div>
       <div style={{ border: `2px solid ${OL}`, borderRadius: 6, background: "#0b1220", overflow: "hidden" }}>
+        {order.length > 0 && <div style={{ padding: "6px 10px", fontSize: 11, color: TXT2, borderBottom: `1px solid ${OL}` }}>Drag a room onto another room to reorder it, or onto a level or apartment to move it there.</div>}
         {order.length === 0 && <div style={{ padding: 24, textAlign: "center", color: TXT2, fontSize: 13 }}>No levels yet. Add a level below, then add the rooms that are actually there.</div>}
         {order.map((f, i) => {
           const lv = levels[f];
           const groups = groupsOf(lv.rooms);
           return (
             <div key={f} style={{ display: "flex", borderTop: i ? `1px solid ${OL}` : "none", minHeight: 84 }}>
-              <div style={{ width: 92, flexShrink: 0, background: "#11182780", borderRight: `1px solid ${OL}`, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 6, fontFamily: font, fontSize: 12, fontWeight: 700, color: "#9ec1ff", flexDirection: "column", gap: 4 }}>{lv.label}<button title="Rename or delete this level" style={{ background: "none", border: "none", color: TXT2, cursor: "pointer", fontSize: 11, padding: 0 }} onClick={() => openEditLevel(f, lv.label)}><Icon n="pencil" /> edit</button></div>
-              <div style={{ flex: 1, display: "flex", flexWrap: "wrap", gap: multi ? 14 : 8, padding: 10, alignItems: "stretch" }}>
+              <div onDragOver={e => { if (dragId != null) e.preventDefault(); }} onDrop={e => dropTo(e, f, lv.label, "", null)} style={{ width: 92, flexShrink: 0, background: "#11182780", borderRight: `1px solid ${OL}`, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 6, fontFamily: font, fontSize: 12, fontWeight: 700, color: "#9ec1ff", flexDirection: "column", gap: 4 }}>{lv.label}<button title="Rename or delete this level" style={{ background: "none", border: "none", color: TXT2, cursor: "pointer", fontSize: 11, padding: 0 }} onClick={() => openEditLevel(f, lv.label)}><Icon n="pencil" /> edit</button><button title="Arrange the room layout on this level" style={{ background: "none", border: "none", color: AG, cursor: "pointer", fontSize: 11, padding: 0 }} onClick={() => { setPlanFloor(f); setView("plan"); }}>layout</button></div>
+              <div onDragOver={e => { if (dragId != null) { e.preventDefault(); setOverKey("l" + f); } }} onDrop={e => dropTo(e, f, lv.label, "", null)} style={{ flex: 1, display: "flex", flexWrap: "wrap", gap: multi ? 14 : 8, padding: 10, alignItems: "stretch", background: overKey === "l" + f && dragId != null ? "#1b243355" : "transparent" }}>
                 {groups.map(g => (
-                  <div key={g.apt || "_shared"} style={multi ? { display: "flex", flexDirection: "column", gap: 6, flex: g.apt ? "1 1 320px" : "0 1 auto" } : { display: "contents" }}>
+                  <div key={g.apt || "_shared"} onDragOver={e => { if (dragId != null) { e.preventDefault(); setOverKey("g" + f + g.apt); } }} onDrop={e => dropTo(e, f, lv.label, g.apt, null)} style={multi ? { display: "flex", flexDirection: "column", gap: 6, flex: g.apt ? "1 1 320px" : "0 1 auto" } : { display: "contents" }}>
                     {multi && <div style={{ fontFamily: font, fontSize: 11, letterSpacing: "0.07em", textTransform: "uppercase", color: g.apt ? PK : TXT2 }}>{g.apt || "Shared"}</div>}
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "stretch" }}>
                       {g.rooms.map(u => {
@@ -2287,8 +2308,14 @@ const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddR
                         const done = isDone(u, tradeFilter);
                         const tk = ticketInfo?.[u.unit.toUpperCase()];
                         return (
-                          <button key={u.id} onClick={() => onSelect(u)} style={{ position: "relative", minWidth: 110, flex: "1 1 110px", maxWidth: 190, minHeight: 60, borderRadius: 8, background: done ? DONE_BG : dim ? "#1b2433" : color, opacity: done ? 1 : dim ? 0.55 : 1, border: sel ? "3px solid #FFF" : done ? "1px solid #2c3b2f" : `1px solid ${OL}`, color: done ? DONE_TXT : dim ? "#7b8aa3" : (color === "#FFFFFF" || color === "#F1C40F" ? "#000" : "#FFF"), fontFamily: font, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 8px" }}>
+                          <button key={u.id} draggable onClick={() => onSelect(u)}
+                            onDragStart={e => { setDragId(u.id); e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", String(u.id)); } catch (er) {} }}
+                            onDragEnd={() => { setDragId(null); setOverKey(null); }}
+                            onDragOver={e => { if (dragId != null) { e.preventDefault(); setOverKey("t" + u.id); } }}
+                            onDrop={e => dropTo(e, f, lv.label, u.apt || "", u.id)}
+                            style={{ outline: overKey === "t" + u.id && dragId !== u.id ? "3px solid #FFAA33" : "none", position: "relative", minWidth: 110, flex: "1 1 110px", maxWidth: 190, minHeight: 60, borderRadius: 8, background: done ? DONE_BG : dim ? "#1b2433" : color, opacity: done ? 1 : dim ? 0.55 : 1, border: sel ? "3px solid #FFF" : done ? "1px solid #2c3b2f" : `1px solid ${OL}`, color: done ? DONE_TXT : dim ? "#7b8aa3" : (color === "#FFFFFF" || color === "#F1C40F" ? "#000" : "#FFF"), fontFamily: font, fontSize: 13, fontWeight: 700, cursor: "pointer", padding: "6px 8px" }}>
                             {multi && u.apt && u.unit.startsWith(u.apt + " ") ? u.unit.slice(u.apt.length + 1) : u.unit}
+                            {u.roofType && <div style={{ fontSize: 10, fontWeight: 500, opacity: 0.75 }}>{u.roofType} roof</div>}
                             {done && <svg width="16" height="16" viewBox="0 0 16 16" style={{ position: "absolute", right: 5, bottom: 5 }}><path d="M2 8.5 l4 4 l8 -9" fill="none" stroke={DONE_OK} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                             {hasAcc && <span style={{ position: "absolute", top: 5, right: 5, width: 9, height: 9, borderRadius: 5, background: "#ef5350", border: "1px solid #0b1220" }} />}
                             {tk && <span style={{ position: "absolute", left: 5, bottom: 5, minWidth: 16, height: 16, borderRadius: 8, background: tk.urgent ? "#ef5350" : PK, color: "#000", fontSize: 10, lineHeight: "16px", textAlign: "center", padding: "0 3px" }}>{tk.open}</span>}
@@ -2312,7 +2339,23 @@ const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddR
       {dlg && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={closeDlg}>
           <div style={{ ...S.card, width: 420, maxWidth: "100%", marginBottom: 0 }} onClick={e => e.stopPropagation()}>
-            {dlg.kind === "editlevel" ? (<>
+            {dlg.kind === "prop" ? (<>
+              <div style={S.cardTitle}>Edit property levels</div>
+              <label style={S.label}>Floors above ground</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                <button style={{ ...S.btn(), padding: "8px 16px" }} disabled={topFloor < 1} onClick={() => onDeleteLevel(topFloor, levels[topFloor]?.label || ordinal(topFloor))}>−</button>
+                <span style={{ fontFamily: font, fontSize: 22, minWidth: 28, textAlign: "center" }}>{order.filter(f => f >= 1 && f < 99).length}</span>
+                <button style={{ ...S.btn(), padding: "8px 16px" }} onClick={() => onAddLevel(topFloor + 1, ordinal(topFloor + 1))}>+</button>
+                <span style={{ fontSize: 12, color: TXT2 }}>{order.filter(f => f >= 1 && f < 99).map(f => levels[f].label).reverse().join(", ") || "none yet"}</span>
+              </div>
+              <label style={S.label}>Other levels</label>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {[[0, "Basement"], [99, "Attic"], [-1, "Garage"], [100, "Roof"], [-2, "Exterior"]].map(([fl, lb]) => { const on = fl in levels; return (
+                  <button key={fl} style={{ ...S.btn(on ? "primary" : undefined), padding: "10px 14px", fontSize: 13 }} onClick={() => { if (on) onDeleteLevel(fl, levels[fl].label); else onAddLevel(fl, lb); }}>{on ? "✓ " : ""}{lb}</button>); })}
+              </div>
+              <div style={{ fontSize: 12, color: TXT2, marginTop: 8 }}>Turning a level off deletes it and its rooms (you'll be asked first). Use <strong>Apartments</strong> to change the number of families.</div>
+              <button style={{ ...S.btn("primary"), marginTop: 14, width: "100%" }} onClick={closeDlg}>Done</button>
+            </>) : dlg.kind === "editlevel" ? (<>
               <div style={S.cardTitle}>Edit level</div>
               <label style={S.label}>Level name</label>
               <input style={S.input} autoFocus value={lvName} onChange={e => setLvName(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && lvName.trim()) { onRenameLevel(dlg.floor, lvName.trim()); closeDlg(); } }} />
@@ -2356,21 +2399,28 @@ const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddR
               {isExt ? (<>
                 <label style={S.label}>What</label>
                 <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-                  {["Gutter", "Downspout", "Other"].map(k => <button key={k} style={{ ...S.btn(kind === k ? "primary" : undefined), flex: 1, padding: "10px 0" }} onClick={() => setKind(k)}>{k}</button>)}
+                  {["Gutter", "Downspout", "Backyard", "Driveway", "Other"].map(k => <button key={k} style={{ ...S.btn(kind === k ? "primary" : undefined), flex: 1, padding: "10px 0" }} onClick={() => setKind(k)}>{k}</button>)}
                 </div>
                 {kind === "Other" && <><label style={S.label}>Name</label><input style={{ ...S.input, marginBottom: 10 }} value={name} placeholder="e.g. Siding" onChange={e => setName(e.target.value)} /></>}
+                {needsLoc && <>
                 <label style={S.label}>Location</label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
                   {["Front", "Rear", "Left side", "Right side"].map(l => <button key={l} style={{ ...S.btn(loc === l ? "primary" : undefined), padding: "8px 12px", fontSize: 13 }} onClick={() => setLoc(l)}>{l}</button>)}
                 </div>
                 <input style={S.input} autoFocus value={loc} placeholder="or type a location, e.g. Garage side, Porch" onChange={e => setLoc(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addNow(); }} />
+                </>}
               </>) : (<>
-              <label style={S.label}>Room name</label>
+              <label style={S.label}>{isRoof ? "Roof section or chimney" : "Room name"}</label>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                {(isRoof ? ["Front Roof", "Back Roof", "Side Roof", "Chimney"] : ["Foyer", "Front Door", "Rear Door", "Side Door", "Staircase"]).map(q => <button key={q} style={{ ...S.btn(name === q ? "primary" : undefined), padding: "6px 10px", fontSize: 12 }} onClick={() => setName(q)}>{q}</button>)}
+              </div>
               <input style={S.input} autoFocus value={name} placeholder="e.g. Kitchen" onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") addNow(); }} />
               </>)}
+              {isRoof && !/chimney/i.test(name) && <div style={{ marginTop: 10 }}><label style={S.label}>Roof type</label>
+                <div style={{ display: "flex", gap: 6 }}>{["Flat", "Pitched"].map(t => <button key={t} style={{ ...S.btn(roofType === t ? "primary" : undefined), flex: 1, padding: "10px 0" }} onClick={() => setRoofType(t)}>{t}</button>)}</div></div>}
               {added.length > 0 && <div style={{ fontSize: 12, color: AG2, marginTop: 8 }}>Added: {added.join(", ")}</div>}
               <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                <button style={S.btn("primary")} onClick={addNow} disabled={isExt ? (!loc.trim() || (kind === "Other" && !name.trim())) : !name.trim()}>{isExt ? "Add" : "Add room"}</button>
+                <button style={S.btn("primary")} onClick={addNow} disabled={!canAdd}>{isExt ? "Add" : "Add room"}</button>
                 <button style={S.btn()} onClick={closeDlg}>Done</button>
               </div>
             </>)}
@@ -2475,6 +2525,7 @@ const PropertiesView = ({ list, activeId, live, summaries, onOpen, onAdd, onDele
                     <button style={S.btn("primary")} onClick={() => { onEdit(p.id, { name: e.name.trim() || name, address: e.address.trim() }); setEditId(null); }}>Save</button>
                     <button style={S.btn()} onClick={() => setEditId(null)}>Cancel</button>
                   </div>
+                  {(p.type || sm.type) === "house" && <button style={S.btn()} onClick={() => { try { sessionStorage.setItem("bt_openedit", "1"); } catch (e) {} setEditId(null); onOpen(p.id); }}>Edit levels, roofs & layout…</button>}
                 </div>
               ) : (
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
@@ -2567,9 +2618,9 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
 
   const snapshot = () => ({ units, schedule, commonAreas, areaList, showAreas, enabledItems, elevatorFloors, elevatorStuck, projectName, unitFormat, floorCount, perFloor, events, demoMode, tickets, propType, families: aptList.length || 1, aptList, houseLevels });
 
-  const addRoom = (floor, level, apt, name) => {
+  const addRoom = (floor, level, apt, name, extra = {}) => {
     if (!name) return;
-    setUnits(prev => [...prev, blankUnit(prev.reduce((m, u) => Math.max(m, u.id), 0) + 1, apt ? `${apt} ${name}` : name, floor, level, apt)]);
+    setUnits(prev => [...prev, { ...blankUnit(prev.reduce((m, u) => Math.max(m, u.id), 0) + 1, apt ? `${apt} ${name}` : name, floor, level, apt), ...extra }]);
   };
   const levelsList = (() => { const m = new Map(); houseLevels.forEach(l => m.set(l.floor, l.label)); units.forEach(u => { if (!m.has(u.floor)) m.set(u.floor, u.level || ("Level " + u.floor)); }); return [...m.entries()].map(([floor, label]) => ({ floor, label })).sort((a, b) => b.floor - a.floor); })();
   const renameLevel = (floor, label) => {
@@ -2592,6 +2643,15 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
     if (!confirm(n ? `Delete "${name}" and its ${n} room${n > 1 ? "s" : ""}, including everything recorded in them? This cannot be undone.` : `Delete "${name}"?`)) return;
     setAptList(l => l.filter(a => a !== name)); setUnits(prev => prev.filter(u => u.apt !== name)); setSelectedUnit(null);
   };
+  const moveRoom = (id, to) => setUnits(prev => {
+    const u = prev.find(x => x.id === id); if (!u) return prev;
+    const na = to.apt || "", base = u.apt && u.unit.startsWith(u.apt + " ") ? u.unit.slice(u.apt.length + 1) : u.unit;
+    const moved = { ...u, floor: to.floor, level: to.level, apt: na, unit: na === u.apt ? u.unit : (na ? `${na} ${base}` : base), plan: to.floor === u.floor ? u.plan : null };
+    const rest = prev.filter(x => x.id !== id);
+    const at = to.beforeId != null ? rest.findIndex(x => x.id === to.beforeId) : -1;
+    if (at < 0) return [...rest, moved];
+    return [...rest.slice(0, at), moved, ...rest.slice(at)];
+  });
   const updatePlan = (id, plan) => setUnits(prev => prev.map(u => u.id === id ? { ...u, plan: plan || null } : u));
   const addLevel = (floor, label) => setHouseLevels(ls => ls.some(l => l.floor === floor) ? ls : [...ls, { floor, label }]);
   const deleteRoom = (id) => { setUnits(prev => prev.filter(u => u.id !== id)); setSelectedUnit(null);
@@ -3033,7 +3093,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
             <div style={S.card}>
               <div style={S.cardTitle}>{isHouse ? "House Map" : "Unit Map"}</div>
               <Legend />
-              <UnitMap isHouse={isHouse} onPlan={updatePlan} onAddRoom={addRoom} levelsDef={houseLevels} onAddLevel={addLevel} aptList={aptList} onRenameLevel={renameLevel} onDeleteLevel={deleteLevel} onAddApt={addApt} onRenameApt={renameApt} onDeleteApt={deleteApt} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
+              <UnitMap isHouse={isHouse} onPlan={updatePlan} onMoveRoom={moveRoom} onAddRoom={addRoom} levelsDef={houseLevels} onAddLevel={addLevel} aptList={aptList} onRenameLevel={renameLevel} onDeleteLevel={deleteLevel} onAddApt={addApt} onRenameApt={renameApt} onDeleteApt={deleteApt} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
             </div>
 
             <TicketsPanel tickets={tickets} connected={!!ticketCfg.url} onOpen={() => setPage("tickets")} />
@@ -3091,7 +3151,7 @@ function App({ saved, savedCfg, activeId, propList, summaries, startPage, onSwit
                   </button>
                 </div>
               )}
-              <UnitMap isHouse={isHouse} onPlan={updatePlan} onAddRoom={addRoom} levelsDef={houseLevels} onAddLevel={addLevel} aptList={aptList} onRenameLevel={renameLevel} onDeleteLevel={deleteLevel} onAddApt={addApt} onRenameApt={renameApt} onDeleteApt={deleteApt} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
+              <UnitMap isHouse={isHouse} onPlan={updatePlan} onMoveRoom={moveRoom} onAddRoom={addRoom} levelsDef={houseLevels} onAddLevel={addLevel} aptList={aptList} onRenameLevel={renameLevel} onDeleteLevel={deleteLevel} onAddApt={addApt} onRenameApt={renameApt} onDeleteApt={deleteApt} units={units} onSelect={setSelectedUnit} selectedId={selectedUnit?.id} tradeFilter={tradeFilter} commonAreas={commonAreas} setCommonAreas={setCommonAreas} areaList={areaList} showAreas={showAreas} isItemEnabled={isItemEnabled} elevatorFloors={elevatorFloors} elevatorStuck={elevatorStuck} setElevFloor={setElevFloor} toggleElevStuck={toggleElevStuck} floorCount={floorCount} ticketInfo={ticketInfo} />
             </div>
           </div>
         )}
