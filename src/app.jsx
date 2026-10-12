@@ -2326,7 +2326,7 @@ const HouseMap = ({ units, onSelect, selectedId, tradeFilter, ticketInfo, onAddR
                     </div>
                   </div>
                 ))}
-                {(groups.length === 0 || multi) && <button onClick={() => { setApt(""); setDlg({ kind: "room", floor: f, label: lv.label }); }} style={{ ...addBtn, alignSelf: "flex-end" }}>{groups.length === 0 ? (lv.label === "Roof" ? "+ Roof section" : lv.label === "Exterior" ? "+ Gutter / exterior" : "+ Room") : "+ Room (other apt)"}</button>}
+                {groups.length === 0 && <button onClick={() => { setApt(""); setDlg({ kind: "room", floor: f, label: lv.label }); }} style={{ ...addBtn, alignSelf: "flex-end" }}>{groups.length === 0 ? (lv.label === "Roof" ? "+ Roof section" : lv.label === "Exterior" ? "+ Gutter / exterior" : "+ Room") : "+ Room (other apt)"}</button>}
               </div>
             </div>
           );
