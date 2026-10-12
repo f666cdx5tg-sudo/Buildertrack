@@ -2066,7 +2066,7 @@ const TicketsPanel = ({ tickets, onOpen, connected }) => {
 const blankTrades = () => { const t = {}; TRADES.forEach(n => { t[n] = { status: "Pending", phase: "Pending", contractor: "", scheduled: false, accessDenied: false }; }); return t; };
 const blankUnit = (id, name, floor, level, apt) => ({ id, unit: name, floor, level, apt: apt || "", vacant: false, contact: { first: "", last: "", phone: "", email: "" }, trades: blankTrades(), comments: [], photos: [], notices: [] });
 const ordinal = (n) => n === 1 ? "1st Floor" : n === 2 ? "2nd Floor" : n === 3 ? "3rd Floor" : n + "th Floor";
-const generateHouseRooms = ({ stories = 2, beds = 3, baths = 2, basement = true, attic = false, garage = false, families = 1 }) => {
+const generateHouseRooms = ({ stories = 2, beds = 3, baths = 2, basement = true, attic = false, garage = false, families = 1, layouts = [] }) => {
   const rooms = [];
   const add = (name, floor, level, apt) => rooms.push({ name, floor, level, apt });
   if (families > 1) {
@@ -2074,9 +2074,10 @@ const generateHouseRooms = ({ stories = 2, beds = 3, baths = 2, basement = true,
     add("Entry", 1, ordinal(1), "");
     for (let a = 1; a <= families; a++) {
       const f = ((a - 1) % stories) + 1, lv = ordinal(f), ap = "Apt " + a;
+      const L = layouts[a - 1] || { beds, baths };
       add(`${ap} Living Room`, f, lv, ap); add(`${ap} Kitchen`, f, lv, ap);
-      for (let i = 0; i < beds; i++) add(`${ap} ${i === 0 ? "Primary Bedroom" : "Bedroom " + (i + 1)}`, f, lv, ap);
-      for (let i = 0; i < baths; i++) add(`${ap} ${i === 0 ? "Bathroom" : "Bathroom " + (i + 1)}`, f, lv, ap);
+      for (let i = 0; i < L.beds; i++) add(`${ap} ${i === 0 ? "Primary Bedroom" : "Bedroom " + (i + 1)}`, f, lv, ap);
+      for (let i = 0; i < L.baths; i++) add(`${ap} ${i === 0 ? "Bathroom" : "Bathroom " + (i + 1)}`, f, lv, ap);
     }
     if (basement) ["Basement", "Laundry", "Utility Room"].forEach(n => add(n, 0, "Basement", ""));
     if (attic) add("Attic", 99, "Attic", "");
@@ -2170,7 +2171,7 @@ const summarize = (st) => {
 const PropertiesView = ({ list, activeId, live, summaries, onOpen, onAdd, onDelete, onEdit }) => {
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState(null);
-  const blankForm = { type: "multifamily", name: "", address: "", floors: 5, perFloor: 8, format: "alpha", stories: 2, families: 1, beds: 3, baths: 2, basement: true, attic: false, garage: false };
+  const blankForm = { type: "multifamily", name: "", address: "", floors: 5, perFloor: 8, format: "alpha", stories: 2, families: 1, layouts: [], beds: 3, baths: 2, basement: true, attic: false, garage: false };
   const [f, setF] = useState(blankForm);
   const [e, setE] = useState({ name: "", address: "" });
   const create = () => { if (!f.name.trim()) return; onAdd({ ...f, name: f.name.trim(), address: f.address.trim() }); setAdding(false); setF(blankForm); };
@@ -2212,12 +2213,25 @@ const PropertiesView = ({ list, activeId, live, summaries, onOpen, onAdd, onDele
             </>) : (<>
               <div><label style={S.label}>Families</label>
                 <div style={{ display: "flex", gap: 6 }}>
-                  {[1, 2, 3, 4].map(n => <button key={n} style={{ ...S.btn(f.families === n ? "primary" : undefined), flex: 1, padding: "12px 0" }} onClick={() => setF({ ...f, families: n, beds: n > 1 ? 2 : 3, baths: n > 1 ? 1 : 2, stories: n > 1 ? Math.max(f.stories, Math.min(n, 3)) : f.stories })}>{n === 1 ? "1 (single)" : n}</button>)}
+                  {[1, 2, 3, 4].map(n => <button key={n} style={{ ...S.btn(f.families === n ? "primary" : undefined), flex: 1, padding: "12px 0" }} onClick={() => setF({ ...f, families: n, layouts: Array.from({ length: n }, (_, i) => f.layouts?.[i] || { beds: 2, baths: 1 }), stories: n > 1 ? Math.max(f.stories, Math.min(n, 3)) : f.stories })}>{n === 1 ? "1 (single)" : n}</button>)}
                 </div>
               </div>
               <div><label style={S.label}>Stories</label><input style={S.input} type="number" min="1" max="3" value={f.stories} onChange={ev => setF({ ...f, stories: Math.max(1, Math.min(3, +ev.target.value || 1)) })} /></div>
-              <div><label style={S.label}>{f.families > 1 ? "Bedrooms per apartment" : "Bedrooms"}</label><input style={S.input} type="number" min="1" max="8" value={f.beds} onChange={ev => setF({ ...f, beds: Math.max(1, Math.min(8, +ev.target.value || 1)) })} /></div>
-              <div><label style={S.label}>{f.families > 1 ? "Bathrooms per apartment" : "Bathrooms"}</label><input style={S.input} type="number" min="1" max="6" value={f.baths} onChange={ev => setF({ ...f, baths: Math.max(1, Math.min(6, +ev.target.value || 1)) })} /></div>
+              {f.families > 1 && (
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={S.label}>Each apartment's layout (0 bedrooms = studio)</label>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 8 }}>
+                    {Array.from({ length: f.families }, (_, i) => { const L = f.layouts?.[i] || { beds: 2, baths: 1 }; const setL = (patch) => setF({ ...f, layouts: Array.from({ length: f.families }, (_, j) => j === i ? { ...L, ...patch } : (f.layouts?.[j] || { beds: 2, baths: 1 })) }); return (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: BG2, border: `1px solid ${BD}`, borderRadius: 10, padding: "8px 10px" }}>
+                        <span style={{ fontFamily: font, fontSize: 13, color: PK, width: 46 }}>Apt {i + 1}</span>
+                        <input style={{ ...S.input, width: 56, padding: "8px" }} type="number" min="0" max="8" value={L.beds} onChange={ev => setL({ beds: Math.max(0, Math.min(8, +ev.target.value || 0)) })} /><span style={{ fontSize: 12, color: TXT2 }}>bed</span>
+                        <input style={{ ...S.input, width: 56, padding: "8px" }} type="number" min="1" max="6" value={L.baths} onChange={ev => setL({ baths: Math.max(1, Math.min(6, +ev.target.value || 1)) })} /><span style={{ fontSize: 12, color: TXT2 }}>bath</span>
+                      </div>); })}
+                  </div>
+                </div>
+              )}
+              {f.families <= 1 && <div><label style={S.label}>Bedrooms</label><input style={S.input} type="number" min="1" max="8" value={f.beds} onChange={ev => setF({ ...f, beds: Math.max(1, Math.min(8, +ev.target.value || 1)) })} /></div>}
+              {f.families <= 1 && <div><label style={S.label}>Bathrooms</label><input style={S.input} type="number" min="1" max="6" value={f.baths} onChange={ev => setF({ ...f, baths: Math.max(1, Math.min(6, +ev.target.value || 1)) })} /></div>}
               <div><label style={S.label}>Also has</label>
                 <div style={{ display: "flex", gap: 8 }}>
                   {[["basement", "Basement"], ["attic", "Attic"], ["garage", "Garage"]].map(([k, l]) => <button key={k} style={{ ...S.btn(f[k] ? "primary" : undefined), flex: 1, padding: "12px 8px" }} onClick={() => setF({ ...f, [k]: !f[k] })}>{l}</button>)}
